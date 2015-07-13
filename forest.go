@@ -28,6 +28,7 @@ const (
 	SessionUserID         = "sessionuserid"
 	Error                 = "foresterror"
 	SafeError             = "forestsafeerror"
+	WareInstalled         = "forest middleware"
 )
 
 func InitLog(app *App, level string, message string) {

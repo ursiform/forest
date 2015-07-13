@@ -9,6 +9,7 @@ import (
 )
 
 type App struct {
+	CookiePath      string
 	Debug           bool
 	durations       map[string]time.Duration
 	errors          map[string]string
@@ -52,6 +53,30 @@ func (app *App) SetMessage(key string, value string) {
 	InitLog(app, "initialize", fmt.Sprintf("(*forest.App).Message(\"%s\") = %s", key, value))
 }
 
+func (app *App) InstallBodyParser() {
+	app.InstallWare("BodyParser", waresBodyParser(app), WareInstalled)
+}
+
+func (app *App) InstallErrorWares() {
+	app.InstallWare("BadRequest", waresErrorsBadRequest(app), WareInstalled)
+	app.InstallWare("Conflict", waresErrorsBadRequest(app), WareInstalled)
+	app.InstallWare("MethodNotAllowed", waresErrorsMethodNotAllowed(app), WareInstalled)
+	app.InstallWare("NotFound", waresErrorsNotFound(app), WareInstalled)
+	app.InstallWare("ServerError", waresErrorsServerError(app), WareInstalled)
+	app.InstallWare("Unauthorized", waresErrorsUnauthorized(app), WareInstalled)
+}
+
+func (app *App) InstallSecurityWares() {
+	app.InstallWare("Authenticate", waresAuthenticate(app), WareInstalled)
+	app.InstallWare("CSRF", waresCSRF(app), WareInstalled)
+}
+
+func (app *App) InstallSessionWares(manager SessionManager) {
+	app.InstallWare("SessionDel", waresSessionDel(app, manager), WareInstalled)
+	app.InstallWare("SessionGet", waresSessionGet(app, manager), WareInstalled)
+	app.InstallWare("SessionSet", waresSessionSet(app, manager), WareInstalled)
+}
+
 func (app *App) InstallWare(key string, handler bear.HandlerFunc, message string) error {
 	if handler == nil {
 		return fmt.Errorf("(*forest.App).InstallWare(\"%s\") was passed a nil handler", key)
@@ -72,11 +97,48 @@ func (app *App) Response(res http.ResponseWriter, code int, success bool, messag
 	return &Response{app: app, Code: code, Success: success, Message: message, writer: res}
 }
 
+func (app *App) safeErrorFilter(err error, friendly string) error {
+	if app.Debug {
+		return err
+	} else {
+		if app.SafeErrorFilter != nil {
+			if err := app.SafeErrorFilter(err); err != nil {
+				return err
+			} else {
+				return fmt.Errorf(friendly)
+			}
+		} else {
+			return fmt.Errorf(friendly)
+		}
+	}
+}
+
+func (app *App) safeErrorMessage(ctx *bear.Context, friendly string) string {
+	if err, ok := ctx.Get(SafeError).(error); ok && err != nil {
+		return err.Error()
+	} else if err, ok := ctx.Get(Error).(error); ok && err != nil {
+		return app.safeErrorFilter(err, friendly).Error()
+	} else {
+		return friendly
+	}
+}
+
 func (app *App) Serve(port string) error {
 	if "" == port {
 		return fmt.Errorf("forest: no port was specified")
 	}
 	return http.ListenAndServe(port, app.Router)
+}
+
+func (app *App) SetCookie(res http.ResponseWriter, path, key, value string, duration time.Duration) {
+	http.SetCookie(res, &http.Cookie{
+		Name:     key,
+		Value:    value,
+		Expires:  time.Now().Add(duration),
+		HttpOnly: true,
+		MaxAge:   int(duration / time.Second),
+		Path:     path,
+		Secure:   true})
 }
 
 func (app *App) Ware(key string) bear.HandlerFunc { return app.wares[key] }
