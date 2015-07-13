@@ -1,5 +1,12 @@
+// Copyright 2015 Afshin Darian. All rights reserved.
+// Use of this source code is governed by The MIT License
+// that can be found in the LICENSE file.
+
 /*
-	Package forest
+forest is a micro-framework for building REST services that talk JSON. Its core
+unit is a forest.App that is built upon a bear multiplexer for URL routing. It
+outputs responses using forest.Response and provides utility methods for many
+common tasks required by web services.
 */
 package forest
 
