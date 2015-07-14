@@ -3,8 +3,8 @@
 // that can be found in the LICENSE file.
 
 /*
-wares is a package that contains bear.HandlerFunc (middleware) generating
-functions and installers for use with forest.App instances
+Package wares is a collection of bear.HandlerFunc middleware generators for use
+with a forest.App instance.
 */
 package wares
 

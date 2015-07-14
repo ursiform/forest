@@ -1,7 +1,11 @@
 # forest
 
-`forest` is a REST+JSON (micro)service micro-framework written in Go on top of the
-[`bear`](https://github.com/ursiform/bear) HTTP multiplexer.
+`forest` is a micro-framework for building REST services that talk JSON. Its
+core unit is a [`forest.App`](https://godoc.org/github.com/ursiform/forest#App)
+that is built upon a [`bear`](https://github.com/ursiform/bear) multiplexer for
+URL routing. It outputs responses using
+[`forest.Response`](https://godoc.org/github.com/ursiform/forest#Response)
+and provides utility methods for many common tasks required by web services.
 
 ## Install
 ```

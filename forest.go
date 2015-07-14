@@ -3,10 +3,8 @@
 // that can be found in the LICENSE file.
 
 /*
-forest is a micro-framework for building REST services that talk JSON. Its core
-unit is a forest.App that is built upon a bear multiplexer for URL routing. It
-outputs responses using forest.Response and provides utility methods for many
-common tasks required by web services.
+Package forest provides a minimalist framework for writing REST services that
+speak JSON.
 */
 package forest
 
