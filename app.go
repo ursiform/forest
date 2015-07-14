@@ -57,30 +57,6 @@ func (app *App) SetMessage(key string, value string) {
 	InitLog(app, "initialize", fmt.Sprintf("(*forest.App).Message(\"%s\") = %s", key, value))
 }
 
-func (app *App) InstallBodyParser() {
-	app.InstallWare("BodyParser", waresBodyParser(app), WareInstalled)
-}
-
-func (app *App) InstallErrorWares() {
-	app.InstallWare("BadRequest", waresErrorsBadRequest(app), WareInstalled)
-	app.InstallWare("Conflict", waresErrorsBadRequest(app), WareInstalled)
-	app.InstallWare("MethodNotAllowed", waresErrorsMethodNotAllowed(app), WareInstalled)
-	app.InstallWare("NotFound", waresErrorsNotFound(app), WareInstalled)
-	app.InstallWare("ServerError", waresErrorsServerError(app), WareInstalled)
-	app.InstallWare("Unauthorized", waresErrorsUnauthorized(app), WareInstalled)
-}
-
-func (app *App) InstallSecurityWares() {
-	app.InstallWare("Authenticate", waresAuthenticate(app), WareInstalled)
-	app.InstallWare("CSRF", waresCSRF(app), WareInstalled)
-}
-
-func (app *App) InstallSessionWares(manager SessionManager) {
-	app.InstallWare("SessionDel", waresSessionDel(app, manager), WareInstalled)
-	app.InstallWare("SessionGet", waresSessionGet(app, manager), WareInstalled)
-	app.InstallWare("SessionSet", waresSessionSet(app, manager), WareInstalled)
-}
-
 func (app *App) InstallWare(key string, handler bear.HandlerFunc, message string) error {
 	if handler == nil {
 		return fmt.Errorf("(*forest.App).InstallWare(\"%s\") was passed a nil handler", key)
@@ -99,32 +75,6 @@ func (app *App) RegisterRoute(path string, sub SubRouter) { sub.Route(path) }
 
 func (app *App) Response(res http.ResponseWriter, code int, success bool, message string) *Response {
 	return &Response{app: app, Code: code, Success: success, Message: message, writer: res}
-}
-
-func (app *App) safeErrorFilter(err error, friendly string) error {
-	if app.Debug {
-		return err
-	} else {
-		if app.SafeErrorFilter != nil {
-			if err := app.SafeErrorFilter(err); err != nil {
-				return err
-			} else {
-				return fmt.Errorf(friendly)
-			}
-		} else {
-			return fmt.Errorf(friendly)
-		}
-	}
-}
-
-func (app *App) safeErrorMessage(ctx *bear.Context, friendly string) string {
-	if err, ok := ctx.Get(SafeError).(error); ok && err != nil {
-		return err.Error()
-	} else if err, ok := ctx.Get(Error).(error); ok && err != nil {
-		return app.safeErrorFilter(err, friendly).Error()
-	} else {
-		return friendly
-	}
 }
 
 func (app *App) Serve(port string) error {
