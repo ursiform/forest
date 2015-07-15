@@ -21,8 +21,16 @@ func (app *router) respondSuccess(res http.ResponseWriter, req *http.Request, ct
 	app.Response(res, http.StatusOK, forest.Success, forest.NoMessage).Write(data)
 }
 
+func (app *router) setCookie(res http.ResponseWriter, req *http.Request, ctx *bear.Context) {
+	path := "/"
+	cookieName := "foo"
+	cookieValue := "Foo"
+	app.SetCookie(res, path, cookieName, cookieValue, app.Duration("Cookie"))
+	ctx.Next(res, req)
+}
+
 func (app *router) Route(path string) {
-	app.Router.On("GET", path, app.respondSuccess)
+	app.Router.On("GET", path, app.setCookie, app.respondSuccess)
 	app.Router.On("*", path, app.Ware("MethodNotAllowed"))
 }
 

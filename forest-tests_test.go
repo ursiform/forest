@@ -30,7 +30,7 @@ type wanted struct {
 	data    interface{}
 }
 
-func makeRequest(t *testing.T, app *forest.App, params *requested, want *wanted) []byte {
+func makeRequest(t *testing.T, app *forest.App, params *requested, want *wanted) *http.Response {
 	var request *http.Request
 	method := params.method
 	path := params.path
@@ -56,22 +56,52 @@ func makeRequest(t *testing.T, app *forest.App, params *requested, want *wanted)
 		t.Errorf("%s %s should return success: %t", method, path, want.success)
 		return nil
 	}
-	return responseBody
+	return &http.Response{Header: response.Header()}
 }
 
-func TestInstantiation(t *testing.T) {
+func TestBasicOperation(t *testing.T) {
 	debug := true
+	path := "/foo"
+	app := forest.New(debug)
+	app.RegisterRoute(path, newRouter(app))
+	params := &requested{method: "GET", path: path}
+	want := &wanted{code: http.StatusOK, success: true}
+	makeRequest(t, app, params, want)
+}
+
+func TestCookiesAndHeaders(t *testing.T) {
+	debug := true
+	cookieName := "foo"  // also in setCookie function of router
+	cookieValue := "Foo" // also in setCookie function of router
 	path := "/foo"
 	app := forest.New(debug)
 	app.RegisterRoute(path, newRouter(app))
 	app.PoweredBy = "Testing-FTW"
 	params := &requested{method: "GET", path: path}
 	want := &wanted{code: http.StatusOK, success: true}
-	makeRequest(t, app, params, want)
+	response := makeRequest(t, app, params, want)
+	if response.Header.Get("X-Powered-By") != app.PoweredBy {
+		t.Errorf("app.PoweredBy header did not match response header: %s", response.Header.Get("X-Powered-By"))
+	}
+	for _, cookie := range response.Cookies() {
+		if cookie.Name == cookieName && cookie.Value == cookieValue {
+			return
+		}
+	}
+	t.Errorf("cookie was not found")
+}
+
+func TestInitLog(t *testing.T) {
+	// this test is just for complete coverage
+	debug := false
+	app := forest.New(debug)
+	forest.InitLog(app, "", "foo message")           // undefined
+	forest.InitLog(app, "initialize", "bar message") // install
+	forest.InitLog(app, "install", "baz message")    // default
 }
 
 func TestInstallWare(t *testing.T) {
-	debug := true
+	debug := false
 	app := forest.New(debug)
 	message := "Foo handler installed"
 	var handlerNil bear.HandlerFunc
@@ -85,6 +115,36 @@ func TestInstallWare(t *testing.T) {
 	// test duplicate ware installation
 	if err := app.InstallWare("Foo", handler, message); err != nil {
 		t.Errorf("app.InstallWare failed: %s", err.Error())
+	}
+}
+
+func TestRetrievalDuration(t *testing.T) {
+	debug := false
+	durFoo := time.Hour * 1
+	app := forest.New(debug)
+	app.SetDuration("Foo", durFoo)
+	if app.Duration("Foo") != durFoo {
+		t.Errorf("SetDuration failed, want: %s got: %s", durFoo, app.Duration("Foo"))
+	}
+}
+
+func TestRetrievalError(t *testing.T) {
+	debug := false
+	errFoo := "FOO_ERROR"
+	app := forest.New(debug)
+	app.SetError("Foo", errFoo)
+	if app.Error("Foo") != errFoo {
+		t.Errorf("SetError failed, want: %v got: %v", errFoo, app.Error("Foo"))
+	}
+}
+
+func TestRetrievalMessage(t *testing.T) {
+	debug := false
+	msgFoo := "FOO_Message"
+	app := forest.New(debug)
+	app.SetMessage("Foo", msgFoo)
+	if app.Message("Foo") != msgFoo {
+		t.Errorf("SetMessage failed, want: %s got: %s", msgFoo, app.Message("Foo"))
 	}
 }
 
@@ -110,34 +170,4 @@ func TestServeSuccess(t *testing.T) {
 			t.Errorf("app.Serve failed, %s", err.Error())
 		}
 	}()
-}
-
-func TestDurationRetrieval(t *testing.T) {
-	debug := false
-	durFoo := time.Hour * 1
-	app := forest.New(debug)
-	app.SetDuration("Foo", durFoo)
-	if app.Duration("Foo") != durFoo {
-		t.Errorf("SetDuration failed, want: %s got: %s", durFoo, app.Duration("Foo"))
-	}
-}
-
-func TestErrorRetrieval(t *testing.T) {
-	debug := false
-	errFoo := "FOO_ERROR"
-	app := forest.New(debug)
-	app.SetError("Foo", errFoo)
-	if app.Error("Foo") != errFoo {
-		t.Errorf("SetError failed, want: %v got: %v", errFoo, app.Error("Foo"))
-	}
-}
-
-func TestMessageRetrieval(t *testing.T) {
-	debug := false
-	msgFoo := "FOO_Message"
-	app := forest.New(debug)
-	app.SetMessage("Foo", msgFoo)
-	if app.Message("Foo") != msgFoo {
-		t.Errorf("SetMessage failed, want: %s got: %s", msgFoo, app.Message("Foo"))
-	}
 }
