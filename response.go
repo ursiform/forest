@@ -7,6 +7,7 @@ package forest
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 )
 
 type Response struct {
@@ -16,6 +17,17 @@ type Response struct {
 	Success bool        `json:"success"`
 	Message string      `json:"message,omitempty"`
 	writer  http.ResponseWriter
+}
+
+func (res *Response) SetCookie(path, key, value string, duration time.Duration) {
+	http.SetCookie(res.writer, &http.Cookie{
+		Name:     key,
+		Value:    value,
+		Expires:  time.Now().Add(duration),
+		HttpOnly: true,
+		MaxAge:   int(duration / time.Second),
+		Path:     path,
+		Secure:   true})
 }
 
 func (res *Response) Write(data interface{}) (bytes int, err error) {

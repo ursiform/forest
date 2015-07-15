@@ -85,14 +85,8 @@ func (app *App) Serve(port string) error {
 }
 
 func (app *App) SetCookie(res http.ResponseWriter, path, key, value string, duration time.Duration) {
-	http.SetCookie(res, &http.Cookie{
-		Name:     key,
-		Value:    value,
-		Expires:  time.Now().Add(duration),
-		HttpOnly: true,
-		MaxAge:   int(duration / time.Second),
-		Path:     path,
-		Secure:   true})
+	response := &Response{app: app, writer: res}
+	response.SetCookie(path, key, value, duration)
 }
 
 func (app *App) Ware(key string) bear.HandlerFunc { return app.wares[key] }

@@ -12,6 +12,9 @@ and provides utility methods for many common tasks required by web services.
 go get github.com/ursiform/forest
 ```
 
+## Test
+    go test -cover github.com/ursiform/forest/...
+
 ## API
 
 [![API documentation](https://godoc.org/github.com/ursiform/forest?status.svg)](https://godoc.org/github.com/ursiform/forest)
