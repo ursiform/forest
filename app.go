@@ -89,7 +89,16 @@ func (app *App) SetCookie(res http.ResponseWriter, path, key, value string, dura
 	response.SetCookie(path, key, value, duration)
 }
 
-func (app *App) Ware(key string) bear.HandlerFunc { return app.wares[key] }
+func (app *App) Ware(key string) bear.HandlerFunc {
+	handler := app.wares[key]
+	if handler == nil {
+		return bear.HandlerFunc(func(res http.ResponseWriter, req *http.Request, ctx *bear.Context) {
+			message := fmt.Sprintf("(*forest.App).Ware(%s) is nil", key)
+			app.Response(res, http.StatusInternalServerError, Failure, message).Write(nil)
+		})
+	}
+	return handler
+}
 
 func New(debug bool) *App {
 	app := &App{
@@ -105,6 +114,9 @@ func New(debug bool) *App {
 			ip := req.Header.Get("X-Real-IP")
 			if ip == "" {
 				ip = req.RemoteAddr
+			}
+			if ip == "" {
+				ip = "Unknown-IP"
 			}
 			log.Printf("[%s] %s %s\n", ip, req.Method, req.URL.RequestURI())
 			ctx.Next(res, req)

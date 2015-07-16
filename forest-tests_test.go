@@ -80,6 +80,9 @@ func TestCookiesAndHeaders(t *testing.T) {
 	params := &requested{method: "GET", path: path}
 	want := &wanted{code: http.StatusOK, success: true}
 	response := makeRequest(t, app, params, want)
+	if response == nil {
+		return
+	}
 	if response.Header.Get("X-Powered-By") != app.PoweredBy {
 		t.Errorf("app.PoweredBy header did not match response header: %s", response.Header.Get("X-Powered-By"))
 	}
@@ -116,6 +119,17 @@ func TestInstallWare(t *testing.T) {
 	if err := app.InstallWare("Foo", handler, message); err != nil {
 		t.Errorf("app.InstallWare failed: %s", err.Error())
 	}
+}
+
+func TestNonExistentWare(t *testing.T) {
+	debug := false
+	root := "/foo"
+	path := "/foo/nonexistent"
+	app := forest.New(debug)
+	app.RegisterRoute(root, newRouter(app))
+	params := &requested{method: "GET", path: path}
+	want := &wanted{code: http.StatusInternalServerError, success: false}
+	makeRequest(t, app, params, want)
 }
 
 func TestRetrievalDuration(t *testing.T) {
