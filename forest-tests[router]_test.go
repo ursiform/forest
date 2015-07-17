@@ -7,7 +7,7 @@ package forest_test
 import (
 	"github.com/ursiform/bear"
 	"github.com/ursiform/forest"
-	"github.com/ursiform/forest/wares"
+	"github.com/ursiform/forest-wares"
 	"net/http"
 )
 
