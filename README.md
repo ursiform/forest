@@ -12,9 +12,7 @@ URL routing. It outputs responses using
 and provides utility methods for many common tasks required by web services.
 
 ## Install
-```
-go get github.com/ursiform/forest
-```
+    go get github.com/ursiform/forest
 
 ## Test
     go test -cover github.com/ursiform/forest
