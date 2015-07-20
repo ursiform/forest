@@ -40,32 +40,37 @@ func (app *App) Error(key string) string { return app.errors[key] }
 
 func (app *App) SetError(key string, value string) {
 	app.errors[key] = value
-	InitLog(app, "initialize", fmt.Sprintf("(*forest.App).Error(\"%s\") = %s", key, value))
+	output := fmt.Sprintf("(*forest.App).Error(\"%s\") = %s", key, value)
+	InitLog(app, "initialize", output)
 }
 
 func (app *App) Duration(key string) time.Duration { return app.durations[key] }
 
 func (app *App) SetDuration(key string, value time.Duration) {
 	app.durations[key] = value
-	InitLog(app, "initialize", fmt.Sprintf("(*forest.App).Duration(\"%s\") = %s", key, value))
+	output := fmt.Sprintf("(*forest.App).Duration(\"%s\") = %s", key, value)
+	InitLog(app, "initialize", output)
 }
 
 func (app *App) Message(key string) string { return app.messages[key] }
 
 func (app *App) SetMessage(key string, value string) {
 	app.messages[key] = value
-	InitLog(app, "initialize", fmt.Sprintf("(*forest.App).Message(\"%s\") = %s", key, value))
+	output := fmt.Sprintf("(*forest.App).Message(\"%s\") = %s", key, value)
+	InitLog(app, "initialize", output)
 }
 
-func (app *App) InstallWare(key string, handler bear.HandlerFunc, message string) error {
+func (app *App) InstallWare(key string,
+	handler bear.HandlerFunc, message string) error {
 	if handler == nil {
-		return fmt.Errorf("(*forest.App).InstallWare(\"%s\") was passed a nil handler", key)
+		return fmt.Errorf("(*forest.App).InstallWare(\"%s\") is nil", key)
 	}
 	if app.wares[key] != nil {
-		message := "overwritten, perhaps multiple Install(Error|Security|Session)Wares invocations"
-		println(fmt.Sprintf("(*forest.App).Ware(\"%s\") %s", key, message))
+		output := "overwritten, perhaps multiple Install* invocations"
+		println(fmt.Sprintf("(*forest.App).Ware(\"%s\") %s", key, output))
 	} else {
-		InitLog(app, "install", fmt.Sprintf("(*forest.App).Ware(\"%s\") %s", key, message))
+		output := fmt.Sprintf("(*forest.App).Ware(\"%s\") %s", key, message)
+		InitLog(app, "install", output)
 	}
 	app.wares[key] = handler
 	return nil
@@ -73,8 +78,14 @@ func (app *App) InstallWare(key string, handler bear.HandlerFunc, message string
 
 func (app *App) RegisterRoute(path string, sub SubRouter) { sub.Route(path) }
 
-func (app *App) Response(res http.ResponseWriter, code int, success bool, message string) *Response {
-	return &Response{app: app, Code: code, Success: success, Message: message, writer: res}
+func (app *App) Response(res http.ResponseWriter,
+	code int, success bool, message string) *Response {
+	return &Response{
+		app:     app,
+		Code:    code,
+		Success: success,
+		Message: message,
+		writer:  res}
 }
 
 func (app *App) Serve(port string) error {
@@ -84,20 +95,24 @@ func (app *App) Serve(port string) error {
 	return http.ListenAndServe(port, app.Router)
 }
 
-func (app *App) SetCookie(res http.ResponseWriter, path, key, value string, duration time.Duration) {
+func (app *App) SetCookie(res http.ResponseWriter,
+	path, key, value string, duration time.Duration) {
 	response := &Response{app: app, writer: res}
 	response.SetCookie(path, key, value, duration)
 }
 
 func (app *App) Ware(key string) bear.HandlerFunc {
 	handler := app.wares[key]
-	if handler == nil {
-		return bear.HandlerFunc(func(res http.ResponseWriter, req *http.Request, ctx *bear.Context) {
-			message := fmt.Sprintf("(*forest.App).Ware(%s) is nil", key)
-			app.Response(res, http.StatusInternalServerError, Failure, message).Write(nil)
-		})
+	if handler != nil {
+		return handler
 	}
-	return handler
+	errorHandler := func(res http.ResponseWriter, req *http.Request,
+		ctx *bear.Context) {
+		message := fmt.Sprintf("(*forest.App).Ware(%s) is nil", key)
+		app.Response(res,
+			http.StatusInternalServerError, Failure, message).Write(nil)
+	}
+	return bear.HandlerFunc(errorHandler)
 }
 
 func New(debug bool) *App {
@@ -108,8 +123,8 @@ func New(debug bool) *App {
 		messages:  make(map[string]string),
 		Router:    bear.New(),
 		wares:     make(map[string]bear.HandlerFunc)}
-	initDefaults(app)
-	app.Router.Always(func(res http.ResponseWriter, req *http.Request, ctx *bear.Context) {
+	alwaysHandler := func(res http.ResponseWriter, req *http.Request,
+		ctx *bear.Context) {
 		if !app.Debug {
 			ctx.Next(res, req)
 			return
@@ -123,6 +138,8 @@ func New(debug bool) *App {
 		}
 		log.Printf("[%s] %s %s\n", ip, req.Method, req.URL.RequestURI())
 		ctx.Next(res, req)
-	})
+	}
+	initDefaults(app)
+	app.Router.Always(alwaysHandler)
 	return app
 }

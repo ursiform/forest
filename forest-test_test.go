@@ -30,7 +30,8 @@ type wanted struct {
 	data    interface{}
 }
 
-func makeRequest(t *testing.T, app *forest.App, params *requested, want *wanted) *http.Response {
+func makeRequest(t *testing.T, app *forest.App,
+	params *requested, want *wanted) *http.Response {
 	var request *http.Request
 	method := params.method
 	path := params.path
@@ -48,8 +49,9 @@ func makeRequest(t *testing.T, app *forest.App, params *requested, want *wanted)
 		return nil
 	}
 	if response.Code != want.code {
-		t.Errorf("%s %s want: %d (%s) got: %d %s, body: %s", method, path,
-			want.code, http.StatusText(want.code), response.Code, http.StatusText(response.Code), string(responseBody))
+		t.Errorf("%s %s want: %d (%s) got: %d %s, body: %s",
+			method, path, want.code, http.StatusText(want.code), response.Code,
+			http.StatusText(response.Code), string(responseBody))
 		return nil
 	}
 	if responseData.Success != want.success {
@@ -84,7 +86,8 @@ func TestCookiesAndHeaders(t *testing.T) {
 		return
 	}
 	if response.Header.Get("X-Powered-By") != app.PoweredBy {
-		t.Errorf("app.PoweredBy header did not match response header: %s", response.Header.Get("X-Powered-By"))
+		t.Errorf("app.PoweredBy header did not match response header: %s",
+			response.Header.Get("X-Powered-By"))
 	}
 	for _, cookie := range response.Cookies() {
 		if cookie.Name == cookieName && cookie.Value == cookieValue {
@@ -138,7 +141,8 @@ func TestRetrievalDuration(t *testing.T) {
 	app := forest.New(debug)
 	app.SetDuration("Foo", durFoo)
 	if app.Duration("Foo") != durFoo {
-		t.Errorf("SetDuration failed, want: %s got: %s", durFoo, app.Duration("Foo"))
+		t.Errorf("SetDuration failed, want: %s got: %s",
+			durFoo, app.Duration("Foo"))
 	}
 }
 
@@ -158,7 +162,8 @@ func TestRetrievalMessage(t *testing.T) {
 	app := forest.New(debug)
 	app.SetMessage("Foo", msgFoo)
 	if app.Message("Foo") != msgFoo {
-		t.Errorf("SetMessage failed, want: %s got: %s", msgFoo, app.Message("Foo"))
+		t.Errorf("SetMessage failed, want: %s got: %s",
+			msgFoo, app.Message("Foo"))
 	}
 }
 

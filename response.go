@@ -19,7 +19,8 @@ type Response struct {
 	writer  http.ResponseWriter
 }
 
-func (res *Response) SetCookie(path, key, value string, duration time.Duration) {
+func (res *Response) SetCookie(path, key, value string,
+	duration time.Duration) {
 	http.SetCookie(res.writer, &http.Cookie{
 		Name:     key,
 		Value:    value,
