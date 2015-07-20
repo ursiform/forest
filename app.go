@@ -109,18 +109,20 @@ func New(debug bool) *App {
 		Router:    bear.New(),
 		wares:     make(map[string]bear.HandlerFunc)}
 	initDefaults(app)
-	if app.Debug {
-		app.Router.Always(func(res http.ResponseWriter, req *http.Request, ctx *bear.Context) {
-			ip := req.Header.Get("X-Real-IP")
-			if ip == "" {
-				ip = req.RemoteAddr
-			}
-			if ip == "" {
-				ip = "Unknown-IP"
-			}
-			log.Printf("[%s] %s %s\n", ip, req.Method, req.URL.RequestURI())
+	app.Router.Always(func(res http.ResponseWriter, req *http.Request, ctx *bear.Context) {
+		if !app.Debug {
 			ctx.Next(res, req)
-		})
-	}
+			return
+		}
+		ip := req.Header.Get("X-Real-IP")
+		if ip == "" {
+			ip = req.RemoteAddr
+		}
+		if ip == "" {
+			ip = "Unknown-IP"
+		}
+		log.Printf("[%s] %s %s\n", ip, req.Method, req.URL.RequestURI())
+		ctx.Next(res, req)
+	})
 	return app
 }
