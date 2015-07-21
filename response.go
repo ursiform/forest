@@ -6,22 +6,23 @@ package forest
 
 import (
 	"encoding/json"
+	"github.com/ursiform/bear"
 	"net/http"
 	"time"
 )
 
 type Response struct {
 	app     *App
-	Code    int         `json:"-"`
+	Code    int `json:"-"`
+	ctx     *bear.Context
 	Data    interface{} `json:"data,omitempty"`
 	Success bool        `json:"success"`
 	Message string      `json:"message,omitempty"`
-	writer  http.ResponseWriter
 }
 
-func (res *Response) SetCookie(path, key, value string,
-	duration time.Duration) {
-	http.SetCookie(res.writer, &http.Cookie{
+func (res *Response) SetCookie(
+	path, key, value string, duration time.Duration) {
+	http.SetCookie(res.ctx.ResponseWriter, &http.Cookie{
 		Name:     key,
 		Value:    value,
 		Expires:  time.Now().Add(duration),
@@ -34,10 +35,10 @@ func (res *Response) SetCookie(path, key, value string,
 func (res *Response) Write(data interface{}) (bytes int, err error) {
 	res.Data = data
 	output, _ := json.Marshal(res)
-	res.writer.Header().Set("Content-Type", "application/json")
+	res.ctx.ResponseWriter.Header().Set("Content-Type", "application/json")
 	if 0 < len(res.app.PoweredBy) {
-		res.writer.Header().Set("X-Powered-By", res.app.PoweredBy)
+		res.ctx.ResponseWriter.Header().Set("X-Powered-By", res.app.PoweredBy)
 	}
-	res.writer.WriteHeader(res.Code)
-	return res.writer.Write(output)
+	res.ctx.ResponseWriter.WriteHeader(res.Code)
+	return res.ctx.ResponseWriter.Write(output)
 }

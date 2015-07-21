@@ -78,14 +78,14 @@ func (app *App) InstallWare(key string,
 
 func (app *App) RegisterRoute(path string, sub SubRouter) { sub.Route(path) }
 
-func (app *App) Response(res http.ResponseWriter,
+func (app *App) Response(ctx *bear.Context,
 	code int, success bool, message string) *Response {
 	return &Response{
 		app:     app,
+		ctx:     ctx,
 		Code:    code,
 		Success: success,
-		Message: message,
-		writer:  res}
+		Message: message}
 }
 
 func (app *App) Serve(port string) error {
@@ -95,9 +95,9 @@ func (app *App) Serve(port string) error {
 	return http.ListenAndServe(port, app.Router)
 }
 
-func (app *App) SetCookie(res http.ResponseWriter,
-	path, key, value string, duration time.Duration) {
-	response := &Response{app: app, writer: res}
+func (app *App) SetCookie(
+	ctx *bear.Context, path, key, value string, duration time.Duration) {
+	response := &Response{app: app, ctx: ctx}
 	response.SetCookie(path, key, value, duration)
 }
 
@@ -109,7 +109,7 @@ func (app *App) Ware(key string) bear.HandlerFunc {
 	errorHandler := func(res http.ResponseWriter, req *http.Request,
 		ctx *bear.Context) {
 		message := fmt.Sprintf("(*forest.App).Ware(%s) is nil", key)
-		app.Response(res,
+		app.Response(ctx,
 			http.StatusInternalServerError, Failure, message).Write(nil)
 	}
 	return bear.HandlerFunc(errorHandler)

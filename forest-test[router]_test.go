@@ -17,19 +17,19 @@ type responseFormat struct {
 
 type router struct{ *forest.App }
 
-func (app *router) respondSuccess(res http.ResponseWriter, req *http.Request,
-	ctx *bear.Context) {
+func (app *router) respondSuccess(
+	_ http.ResponseWriter, _ *http.Request, ctx *bear.Context) {
 	data := &responseFormat{Foo: "foo"}
-	app.Response(res,
+	app.Response(ctx,
 		http.StatusOK, forest.Success, forest.NoMessage).Write(data)
 }
 
-func (app *router) setCookie(res http.ResponseWriter, req *http.Request,
-	ctx *bear.Context) {
+func (app *router) setCookie(
+	_ http.ResponseWriter, _ *http.Request, ctx *bear.Context) {
 	path := "/"
 	cookieName := "foo"
 	cookieValue := "Foo"
-	app.SetCookie(res, path, cookieName, cookieValue, app.Duration("Cookie"))
+	app.SetCookie(ctx, path, cookieName, cookieValue, app.Duration("Cookie"))
 	ctx.Next()
 }
 
@@ -38,7 +38,8 @@ func (app *router) Route(path string) {
 		app.Ware("NonExistent"), app.respondSuccess)
 	app.Router.On("GET", path,
 		app.setCookie, app.respondSuccess)
-	app.Router.On("*", path, app.Ware("MethodNotAllowed"))
+	app.Router.On("*", path,
+		app.Ware("MethodNotAllowed"))
 }
 
 func newRouter(parent *forest.App) *router {
