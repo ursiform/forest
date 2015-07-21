@@ -126,7 +126,7 @@ func New(debug bool) *App {
 	alwaysHandler := func(res http.ResponseWriter, req *http.Request,
 		ctx *bear.Context) {
 		if !app.Debug {
-			ctx.Next(res, req)
+			ctx.Next()
 			return
 		}
 		ip := req.Header.Get("X-Real-IP")
@@ -137,7 +137,7 @@ func New(debug bool) *App {
 			ip = "Unknown-IP"
 		}
 		log.Printf("[%s] %s %s\n", ip, req.Method, req.URL.RequestURI())
-		ctx.Next(res, req)
+		ctx.Next()
 	}
 	initDefaults(app)
 	app.Router.Always(alwaysHandler)

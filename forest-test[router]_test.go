@@ -30,7 +30,7 @@ func (app *router) setCookie(res http.ResponseWriter, req *http.Request,
 	cookieName := "foo"
 	cookieValue := "Foo"
 	app.SetCookie(res, path, cookieName, cookieValue, app.Duration("Cookie"))
-	ctx.Next(res, req)
+	ctx.Next()
 }
 
 func (app *router) Route(path string) {
