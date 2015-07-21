@@ -19,6 +19,8 @@ import (
 	"time"
 )
 
+const root = "/test"
+
 type requested struct {
 	method string
 	path   string
@@ -63,7 +65,7 @@ func makeRequest(t *testing.T, app *forest.App,
 
 func TestBasicOperation(t *testing.T) {
 	debug := true
-	path := "/foo"
+	path := root
 	app := forest.New(debug)
 	app.RegisterRoute(path, newRouter(app))
 	params := &requested{method: "GET", path: path}
@@ -74,8 +76,8 @@ func TestBasicOperation(t *testing.T) {
 func TestCookiesAndHeaders(t *testing.T) {
 	debug := true
 	cookieName := "foo"  // also in setCookie function of router
-	cookieValue := "Foo" // also in setCookie function of router
-	path := "/foo"
+	cookieValue := "bar" // also in setCookie function of router
+	path := root
 	app := forest.New(debug)
 	app.RegisterRoute(path, newRouter(app))
 	app.PoweredBy = "Testing-FTW"
@@ -109,25 +111,25 @@ func TestInitLog(t *testing.T) {
 func TestInstallWare(t *testing.T) {
 	debug := false
 	app := forest.New(debug)
-	message := "Foo handler installed"
+	handlerName := "TestHandler"
+	message := "test handler installed"
 	var handlerNil bear.HandlerFunc
-	if err := app.InstallWare("Foo", handlerNil, message); err == nil {
+	if err := app.InstallWare(handlerName, handlerNil, message); err == nil {
 		t.Errorf("app.InstallWare should reject nil handlers")
 	}
 	handler := func(http.ResponseWriter, *http.Request, *bear.Context) {}
-	if err := app.InstallWare("Foo", handler, message); err != nil {
+	if err := app.InstallWare(handlerName, handler, message); err != nil {
 		t.Errorf("app.InstallWare failed: %s", err.Error())
 	}
 	// test duplicate ware installation
-	if err := app.InstallWare("Foo", handler, message); err != nil {
+	if err := app.InstallWare(handlerName, handler, message); err != nil {
 		t.Errorf("app.InstallWare failed: %s", err.Error())
 	}
 }
 
 func TestNonExistentWare(t *testing.T) {
 	debug := false
-	root := "/foo"
-	path := "/foo/nonexistent"
+	path := root + "/nonexistent"
 	app := forest.New(debug)
 	app.RegisterRoute(root, newRouter(app))
 	params := &requested{method: "GET", path: path}
@@ -169,7 +171,7 @@ func TestRetrievalMessage(t *testing.T) {
 
 func TestServeFailure(t *testing.T) {
 	debug := false
-	path := "/foo"
+	path := root
 	app := forest.New(debug)
 	app.RegisterRoute(path, newRouter(app))
 	go func() {
@@ -181,11 +183,11 @@ func TestServeFailure(t *testing.T) {
 
 func TestServeSuccess(t *testing.T) {
 	debug := false
-	path := "/foo"
+	path := root
 	app := forest.New(debug)
 	app.RegisterRoute(path, newRouter(app))
 	go func() {
-		if err := app.Serve(":31234"); err != nil {
+		if err := app.Serve(":0"); err != nil {
 			t.Errorf("app.Serve failed, %s", err.Error())
 		}
 	}()

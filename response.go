@@ -57,8 +57,12 @@ func (res *Response) Write(data interface{}) (bytes int, err error) {
 			if agent == "" {
 				agent = UnknownAgent
 			}
-			log.Printf("[%s] \"%s %s %s\" %d %d \"%s\"\n",
-				ip, method, uri, proto, code, length, agent)
+			sessionID, ok := res.ctx.Get(SessionID).(string)
+			if !ok || sessionID == "" {
+				sessionID = UnknownSession
+			}
+			log.Printf("[%s][%s] \"%s %s %s\" %d %d \"%s\"\n",
+				ip, sessionID, method, uri, proto, code, length, agent)
 		}()
 	}
 	res.ctx.ResponseWriter.Header().Set("Content-Type", "application/json")

@@ -28,7 +28,7 @@ func (app *router) setCookie(
 	_ http.ResponseWriter, _ *http.Request, ctx *bear.Context) {
 	path := "/"
 	cookieName := "foo"
-	cookieValue := "Foo"
+	cookieValue := "bar"
 	app.SetCookie(ctx, path, cookieName, cookieValue, app.Duration("Cookie"))
 	ctx.Next()
 }

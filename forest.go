@@ -35,6 +35,7 @@ const (
 	SafeError             = "forestsafeerror"
 	UnknownIP             = "unknown-ip"
 	UnknownAgent          = "unknown user agent"
+	UnknownSession        = "unknown-session"
 	WareInstalled         = "forest middleware"
 )
 
