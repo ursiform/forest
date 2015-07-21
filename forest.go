@@ -33,6 +33,8 @@ const (
 	SessionUserID         = "sessionuserid"
 	Error                 = "foresterror"
 	SafeError             = "forestsafeerror"
+	UnknownIP             = "unknown-ip"
+	UnknownAgent          = "unknown user agent"
 	WareInstalled         = "forest middleware"
 )
 

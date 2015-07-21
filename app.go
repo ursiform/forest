@@ -7,7 +7,6 @@ package forest
 import (
 	"fmt"
 	"github.com/ursiform/bear"
-	"log"
 	"net/http"
 	"time"
 )
@@ -106,8 +105,8 @@ func (app *App) Ware(key string) bear.HandlerFunc {
 	if handler != nil {
 		return handler
 	}
-	errorHandler := func(res http.ResponseWriter, req *http.Request,
-		ctx *bear.Context) {
+	errorHandler := func(
+		_ http.ResponseWriter, _ *http.Request, ctx *bear.Context) {
 		message := fmt.Sprintf("(*forest.App).Ware(%s) is nil", key)
 		app.Response(ctx,
 			http.StatusInternalServerError, Failure, message).Write(nil)
@@ -123,23 +122,6 @@ func New(debug bool) *App {
 		messages:  make(map[string]string),
 		Router:    bear.New(),
 		wares:     make(map[string]bear.HandlerFunc)}
-	alwaysHandler := func(res http.ResponseWriter, req *http.Request,
-		ctx *bear.Context) {
-		if !app.Debug {
-			ctx.Next()
-			return
-		}
-		ip := req.Header.Get("X-Real-IP")
-		if ip == "" {
-			ip = req.RemoteAddr
-		}
-		if ip == "" {
-			ip = "Unknown-IP"
-		}
-		log.Printf("[%s] %s %s\n", ip, req.Method, req.URL.RequestURI())
-		ctx.Next()
-	}
 	initDefaults(app)
-	app.Router.Always(alwaysHandler)
 	return app
 }
