@@ -64,10 +64,11 @@ func (res *Response) Write(data interface{}) (bytes int, err error) {
 		agent = UnknownAgent
 	}
 	sessionID, ok := res.ctx.Get(SessionID).(string)
+	message := res.Message
 	if !ok || sessionID == "" {
 		sessionID = UnknownSession
 	}
-	log.Printf("[%s/%s] \"%s %s %s\" %d %d \"%s\"\n",
-		ip, sessionID, method, uri, proto, code, bytes, agent)
+	log.Printf("[%s/%s] \"%s %s %s\" %d %d \"%s\" %s\n",
+		ip, sessionID, method, uri, proto, code, bytes, agent, message)
 	return
 }
