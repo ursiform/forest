@@ -39,7 +39,7 @@ func makeRequest(t *testing.T, app *forest.App,
 	path := params.path
 	request, _ = http.NewRequest(method, path, nil)
 	response := httptest.NewRecorder()
-	app.Router.ServeHTTP(response, request)
+	app.ServeHTTP(response, request)
 	responseData := new(forest.Response)
 	responseBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {

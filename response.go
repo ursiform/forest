@@ -42,7 +42,7 @@ func (res *Response) Write(data interface{}) (bytes int, err error) {
 	}
 	res.ctx.ResponseWriter.WriteHeader(res.Code)
 	bytes, err = res.ctx.ResponseWriter.Write(output)
-	if !res.app.Debug {
+	if !res.app.LogRequests && !res.app.Debug {
 		return
 	}
 	// First, try the X-Real-IP header from the reverse proxy.

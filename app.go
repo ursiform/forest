@@ -12,13 +12,15 @@ import (
 )
 
 type App struct {
+	*bear.Mux
 	CookiePath      string
 	Debug           bool
 	durations       map[string]time.Duration
 	errors          map[string]string
+	LogRequests     bool
 	messages        map[string]string
 	PoweredBy       string
-	Router          *bear.Mux
+	ProxyPath       string
 	SafeErrorFilter func(error) error
 	wares           map[string]bear.HandlerFunc
 }
@@ -75,6 +77,11 @@ func (app *App) InstallWare(key string,
 	return nil
 }
 
+func (app *App) On(verb string, pattern string, handlers ...interface{}) error {
+	InitLog(app, "listen", fmt.Sprintf("%s %s%s", verb, app.ProxyPath, pattern))
+	return app.Mux.On(verb, pattern, handlers...)
+}
+
 func (app *App) RegisterRoute(path string, sub SubRouter) { sub.Route(path) }
 
 func (app *App) Response(ctx *bear.Context,
@@ -91,7 +98,7 @@ func (app *App) Serve(port string) error {
 	if "" == port {
 		return fmt.Errorf("forest: no port was specified")
 	}
-	return http.ListenAndServe(port, app.Router)
+	return http.ListenAndServe(port, app.Mux)
 }
 
 func (app *App) SetCookie(
@@ -115,13 +122,13 @@ func (app *App) Ware(key string) bear.HandlerFunc {
 }
 
 func New(debug bool) *App {
-	app := &App{
-		Debug:     debug,
-		durations: make(map[string]time.Duration),
-		errors:    make(map[string]string),
-		messages:  make(map[string]string),
-		Router:    bear.New(),
-		wares:     make(map[string]bear.HandlerFunc)}
+	app := new(App)
+	app.Mux = bear.New()
+	app.Debug = debug
+	app.durations = make(map[string]time.Duration)
+	app.errors = make(map[string]string)
+	app.messages = make(map[string]string)
+	app.wares = make(map[string]bear.HandlerFunc)
 	initDefaults(app)
 	return app
 }

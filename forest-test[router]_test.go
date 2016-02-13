@@ -34,11 +34,11 @@ func (app *router) setCookie(
 }
 
 func (app *router) Route(path string) {
-	app.Router.On("GET", path+"/nonexistent",
+	app.On("GET", path+"/nonexistent",
 		app.Ware("NonExistent"), app.respondSuccess)
-	app.Router.On("GET", path,
+	app.On("GET", path,
 		app.setCookie, app.respondSuccess)
-	app.Router.On("*", path,
+	app.On("*", path,
 		app.Ware("MethodNotAllowed"))
 }
 
