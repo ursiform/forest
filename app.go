@@ -37,24 +37,32 @@ func initDefaults(app *App) {
 	app.SetError("Unauthorized", ErrorUnauthorized)
 }
 
-func (app *App) Error(key string) string { return app.errors[key] }
+// Getters and setters
 
-func (app *App) SetError(key string, value string) {
-	app.errors[key] = value
-	output := fmt.Sprintf("(*forest.App).Error(\"%s\") = %s", key, value)
-	InitLog(app, "initialize", output)
-}
-
+// Duration gets the duration for a specific key, e.g. "Cookie" expiration.
 func (app *App) Duration(key string) time.Duration { return app.durations[key] }
 
+// SetDuration sets the duration for a specific key, e.g. "Cookie" expiration.
 func (app *App) SetDuration(key string, value time.Duration) {
 	app.durations[key] = value
 	output := fmt.Sprintf("(*forest.App).Duration(\"%s\") = %s", key, value)
 	InitLog(app, "initialize", output)
 }
 
+// Error gets the error for a specific key, e.g. "Unauthorized".
+func (app *App) Error(key string) string { return app.errors[key] }
+
+// SetError sets the error for a specific key, e.g. "Unauthorized".
+func (app *App) SetError(key string, value string) {
+	app.errors[key] = value
+	output := fmt.Sprintf("(*forest.App).Error(\"%s\") = %s", key, value)
+	InitLog(app, "initialize", output)
+}
+
+// Message gets the app message for a specific key, e.g. "AlreadyLoggedIn".
 func (app *App) Message(key string) string { return app.messages[key] }
 
+// SetMessage sets the app message for a specific key, e.g. "AlreadyLoggedIn".
 func (app *App) SetMessage(key string, value string) {
 	app.messages[key] = value
 	output := fmt.Sprintf("(*forest.App).Message(\"%s\") = %s", key, value)
