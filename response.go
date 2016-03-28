@@ -37,12 +37,13 @@ func (res *Response) Write(data interface{}) (bytes int, err error) {
 	res.Data = data
 	output, _ := json.Marshal(res)
 	res.ctx.ResponseWriter.Header().Set("Content-Type", "application/json")
-	if 0 < len(res.app.PoweredBy) {
-		res.ctx.ResponseWriter.Header().Set("X-Powered-By", res.app.PoweredBy)
+	poweredBy := res.app.PoweredBy()
+	if 0 < len(poweredBy) {
+		res.ctx.ResponseWriter.Header().Set("X-Powered-By", poweredBy)
 	}
 	res.ctx.ResponseWriter.WriteHeader(res.Code)
 	bytes, err = res.ctx.ResponseWriter.Write(output)
-	if !res.app.LogRequests && !res.app.Debug {
+	if !res.app.LogRequests() && !res.app.Debug() {
 		return
 	}
 	// First, try the X-Real-IP header from the reverse proxy.

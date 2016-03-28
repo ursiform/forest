@@ -45,13 +45,15 @@ func InitLog(app *App, level string, message string) {
 	case "initialize":
 		prefix = "[initialized]"
 	case "install":
-		prefix = "[installed]  "
+		prefix = "[ installed ]"
 	case "listen":
-		prefix = "[listening]  "
+		prefix = "[ listening ]"
+	case "warning":
+		prefix = "[ *WARNING* ]"
 	default:
-		prefix = "[undefined]  "
+		prefix = "[ undefined ]"
 	}
-	if app.Debug {
+	if app.Debug() {
 		log.Printf("%s %s", prefix, message)
 	}
 }
