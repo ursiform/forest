@@ -22,7 +22,7 @@ type App struct {
 	PoweredBy       string
 	ProxyPath       string
 	SafeErrorFilter func(error) error
-	wares           map[string]bear.HandlerFunc
+	wares           map[string]func(ctx *bear.Context)
 }
 
 func initDefaults(app *App) {
@@ -69,8 +69,8 @@ func (app *App) SetMessage(key string, value string) {
 	InitLog(app, "initialize", output)
 }
 
-func (app *App) InstallWare(key string,
-	handler bear.HandlerFunc, message string) error {
+func (app *App) InstallWare(
+	key string, handler func(ctx *bear.Context), message string) error {
 	if handler == nil {
 		return fmt.Errorf("(*forest.App).InstallWare(\"%s\") is nil", key)
 	}
@@ -115,18 +115,17 @@ func (app *App) SetCookie(
 	response.SetCookie(path, key, value, duration)
 }
 
-func (app *App) Ware(key string) bear.HandlerFunc {
-	handler := app.wares[key]
-	if handler != nil {
+func (app *App) Ware(key string) func(ctx *bear.Context) {
+	if handler := app.wares[key]; handler != nil {
 		return handler
 	}
-	errorHandler := func(
-		_ http.ResponseWriter, _ *http.Request, ctx *bear.Context) {
-		message := fmt.Sprintf("(*forest.App).Ware(%s) is nil", key)
-		app.Response(ctx,
-			http.StatusInternalServerError, Failure, message).Write(nil)
+	return func(ctx *bear.Context) {
+		app.Response(
+			ctx,
+			http.StatusInternalServerError,
+			Failure,
+			fmt.Sprintf("(*forest.App).Ware(%s) is nil", key)).Write(nil)
 	}
-	return bear.HandlerFunc(errorHandler)
 }
 
 func New(debug bool) *App {
@@ -136,7 +135,7 @@ func New(debug bool) *App {
 	app.durations = make(map[string]time.Duration)
 	app.errors = make(map[string]string)
 	app.messages = make(map[string]string)
-	app.wares = make(map[string]bear.HandlerFunc)
+	app.wares = make(map[string]func(ctx *bear.Context))
 	initDefaults(app)
 	return app
 }

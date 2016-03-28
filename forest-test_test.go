@@ -113,11 +113,11 @@ func TestInstallWare(t *testing.T) {
 	app := forest.New(debug)
 	handlerName := "TestHandler"
 	message := "test handler installed"
-	var handlerNil bear.HandlerFunc
+	var handlerNil func(ctx *bear.Context)
 	if err := app.InstallWare(handlerName, handlerNil, message); err == nil {
 		t.Errorf("app.InstallWare should reject nil handlers")
 	}
-	handler := func(http.ResponseWriter, *http.Request, *bear.Context) {}
+	handler := func(*bear.Context) {}
 	if err := app.InstallWare(handlerName, handler, message); err != nil {
 		t.Errorf("app.InstallWare failed: %s", err.Error())
 	}
