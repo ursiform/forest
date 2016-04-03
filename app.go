@@ -180,12 +180,13 @@ func (app *App) Ware(key string) func(ctx *bear.Context) {
 
 func New(debug bool) *App {
 	app := new(App)
-	app.Mux = bear.New()
-	configError := loadConfig(app)
+	app.config = new(appConfig)
 	app.SetDebug(debug) // Set debug before using InitLog.
-	if configError != nil {
+	app.Mux = bear.New()
+	if err := loadConfig(app); err != nil {
 		InitLog(app, "warning", configFile+" was not loaded")
 	}
+	loadNetworkDiscovery(app)
 	app.durations = make(map[string]time.Duration)
 	app.errors = make(map[string]string)
 	app.messages = make(map[string]string)

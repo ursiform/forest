@@ -48,8 +48,8 @@ func InitLog(app *App, level string, message string) {
 		prefix = "[ installed ]"
 	case "listen":
 		prefix = "[ listening ]"
-	case "warning":
-		prefix = "[ *WARNING* ]"
+	case "warn":
+		prefix = "[**warning**]"
 	default:
 		prefix = "[ undefined ]"
 	}
