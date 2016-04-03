@@ -39,6 +39,8 @@ const (
 	WareInstalled         = "forest middleware"
 )
 
+const network = "forest"
+
 func InitLog(app *App, level string, message string) {
 	var prefix string
 	switch level {

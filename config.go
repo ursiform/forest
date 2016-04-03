@@ -19,6 +19,8 @@ type serviceConfig struct {
 type autodiscoveryConfig struct {
 	Interface string `json:"interface,omitempty"`
 	Name      string `json:"name,omitempty"`
+	Port      int    `json:"port,omitempty"`
+	Silent    bool   `json:"silent,omitempty"`
 }
 
 type appConfig struct {
@@ -38,12 +40,6 @@ func loadConfig(app *App) error {
 	}
 	if app.config.Service == nil {
 		app.config.Service = &serviceConfig{}
-	}
-	if len(app.config.Service.Name) == 0 {
-		app.config.Service.Name = "unknown-service"
-	}
-	if len(app.config.Service.Version) == 0 {
-		app.config.Service.Version = "x.x.x"
 	}
 	if app.config.Autodiscovery == nil {
 		app.config.Autodiscovery = &autodiscoveryConfig{}

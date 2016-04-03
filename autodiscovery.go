@@ -7,102 +7,130 @@ package forest
 import (
 	"fmt"
 	"github.com/zeromq/gyre"
+	"sync"
 )
 
-const Network = "FOREST"
+type workers struct {
+	*sync.Mutex
+	current int
+	names   []string
+}
 
 var (
-	bus = make(chan []byte)
+	requests = make(chan []byte)
+	services = make(map[string]workers)
 )
 
-func autodiscoveryFailure(app *App, err error, index int) {
-	message := fmt.Sprintf("autodiscovery failed[1]: %s", err.Error())
+func discoveryFailure(app *App, err error, code string) {
+	message := fmt.Sprintf("[autodiscovery error %s]: %s", code, err.Error())
 	InitLog(app, "warn", message)
 }
 
-func cluster(app *App) {
-	defer close(bus)
-	networkInterface := app.config.Autodiscovery.Interface
-	name := app.config.Autodiscovery.Name
+func discover(app *App) {
+	defer close(requests)
 	node, err := gyre.New()
 	if err != nil {
-		autodiscoveryFailure(app, err, 1)
+		discoveryFailure(app, err, errorDiscoveryInitialize)
 		return
 	}
-	if err = node.Start(); err != nil {
-		autodiscoveryFailure(app, err, 2)
-		return
+	if app.config.Autodiscovery.Port > 0 {
+		if err = node.SetPort(app.config.Autodiscovery.Port); err != nil {
+			discoveryFailure(app, err, errorDiscoverySetPort)
+			return
+		}
 	}
-	defer node.Stop()
-	if err = node.Join(Network); err != nil {
-		autodiscoveryFailure(app, err, 3)
-		return
-	}
+	networkInterface := app.config.Autodiscovery.Interface
 	if len(networkInterface) != 0 {
 		if err = node.SetInterface(networkInterface); err != nil {
-			autodiscoveryFailure(app, err, 4)
+			discoveryFailure(app, err, errorDiscoveryNetworkInterface)
 			return
 		}
 	} else {
 		message := fmt.Sprintf(
-			"%s.%s undefined in %s, using default",
+			"%s.%s not defined in %s, using default",
 			"autodiscovery", "interface", configFile)
 		InitLog(app, "warn", message)
 	}
-	if len(name) != 0 {
+	name := app.config.Autodiscovery.Name
+	if len(name) > 0 {
 		if err = node.SetName(name); err != nil {
-			autodiscoveryFailure(app, err, 5)
+			discoveryFailure(app, err, errorDiscoverySetName)
 			return
 		}
 	} else {
 		message := fmt.Sprintf(
-			"%s.%s undefined in %s, auto name: %s",
+			"%s.%s not defined in %s, using name: %s",
 			"autodiscovery", "name", configFile, node.Name())
 		InitLog(app, "initialize", message)
 	}
+	if err = node.Start(); err != nil {
+		discoveryFailure(app, err, errorDiscoveryStart)
+		return
+	}
+	defer node.Stop()
+	if err = node.Join(network); err != nil {
+		discoveryFailure(app, err, errorDiscoveryJoin)
+		return
+	}
 	if err = node.SetHeader("service", app.config.Service.Name); err != nil {
-		autodiscoveryFailure(app, err, 6)
+		discoveryFailure(app, err, errorDiscoveryServiceHeader)
 		return
 	}
-	if err = node.SetHeader("version", app.config.Service.Version); err != nil {
-		autodiscoveryFailure(app, err, 7)
+	version := app.config.Service.Version
+	if len(version) == 0 {
+		version = "unknown"
+	}
+	if err = node.SetHeader("version", version); err != nil {
+		discoveryFailure(app, err, errorDiscoveryVersionHeader)
 		return
 	}
-	InitLog(app, "listen", "joined "+Network+" network")
+	if port := app.config.Autodiscovery.Port; port > 0 {
+		InitLog(app, "listen", fmt.Sprintf("%s:%d", network, port))
+	} else {
+		InitLog(app, "listen", fmt.Sprintf("autodiscovery [%s:%d]", network, 5670))
+	}
 	for {
 		select {
 		case event := <-node.Events():
 			switch event.Type() {
 			case gyre.EventEnter:
+				fmt.Printf("[autodiscovery enter]\n")
 				if service, ok := event.Header("service"); ok {
-					fmt.Printf("enter[1]: %s\n", service)
+					fmt.Printf("\tservice: %s\n", service)
 				} else {
-					fmt.Printf("enter[1]\n")
+					fmt.Printf("\tservice: unknown\n")
 				}
-				fmt.Printf("enter[2]: %s\n", event.Name())
+				fmt.Printf("\tname: %s\n", event.Name())
 				if version, ok := event.Header("version"); ok {
-					fmt.Printf("enter[3]: %s\n", version)
+					fmt.Printf("\tversion: %s\n", version)
 				} else {
-					fmt.Printf("enter[3]\n")
+					fmt.Printf("\tversion: unknown\n")
 				}
 			case gyre.EventExit:
-				fmt.Printf("exit: %s\n", event.Msg())
+				fmt.Printf("[autodiscovery exit] %s\n", event.Name())
 			case gyre.EventJoin:
-				fmt.Printf("join: %s\n", event.Msg())
+				fmt.Printf("[autodiscovery join] %s\n", event.Name())
 			case gyre.EventLeave:
-				fmt.Printf("leave: %s\n", event.Msg())
+				fmt.Printf("[autodiscovery leave] %s\n", event.Name())
 			case gyre.EventShout:
-				fmt.Printf("shout: %s\n", event.Msg())
+				fmt.Printf("[autodiscovery shout] %s\n", event.Msg())
 			case gyre.EventWhisper:
-				fmt.Printf("whisper: %s\n", event.Msg())
+				fmt.Printf("[autodiscovery whisper] %s\n", event.Msg())
 			}
-		case message := <-bus:
-			node.Shout(Network, message)
+		case request := <-requests:
+			node.Shout(network, request)
 		}
 	}
 }
 
 func loadNetworkDiscovery(app *App) {
-	go cluster(app)
-	return
+	if app.config.Autodiscovery.Silent {
+		return
+	}
+	if len(app.config.Service.Name) == 0 {
+		err := fmt.Errorf("%s.%s not defined in %s", "service", "name", configFile)
+		discoveryFailure(app, err, errorDiscoveryServiceUndefined)
+		return
+	}
+	go discover(app)
 }
