@@ -7,18 +7,12 @@ package forest
 import (
 	"fmt"
 	"github.com/zeromq/gyre"
-	"sync"
 )
 
-type workers struct {
-	*sync.Mutex
-	current int
-	names   []string
-}
-
 var (
-	requests = make(chan []byte)
-	services = make(map[string]workers)
+	requests  = make(chan []byte)
+	services  = make(map[string]*workers)
+	directory = make(map[string]string)
 )
 
 func discoveryFailure(app *App, err error, code string) {
@@ -94,24 +88,40 @@ func discover(app *App) {
 		case event := <-node.Events():
 			switch event.Type() {
 			case gyre.EventEnter:
-				fmt.Printf("[autodiscovery enter]\n")
-				if service, ok := event.Header("service"); ok {
-					fmt.Printf("\tservice: %s\n", service)
-				} else {
-					fmt.Printf("\tservice: unknown\n")
-				}
-				fmt.Printf("\tname: %s\n", event.Name())
-				if version, ok := event.Header("version"); ok {
-					fmt.Printf("\tversion: %s\n", version)
-				} else {
-					fmt.Printf("\tversion: unknown\n")
+				fmt.Printf("[autodiscovery enter] %s\n", event.Name())
+				service, ok := event.Header("service")
+				version, _ := event.Header("version")
+				name := event.Name()
+				if ok {
+					directory[name] = service
+					if services[service] == nil {
+						services[service] = newWorkers()
+					}
+					services[service].add(name, version)
 				}
 			case gyre.EventExit:
 				fmt.Printf("[autodiscovery exit] %s\n", event.Name())
+				name := event.Name()
+				service, ok := directory[name]
+				if ok {
+					remaining := services[service].remove(name)
+					if remaining == 0 {
+						delete(services, service)
+					}
+					delete(directory, name)
+				}
 			case gyre.EventJoin:
 				fmt.Printf("[autodiscovery join] %s\n", event.Name())
 			case gyre.EventLeave:
 				fmt.Printf("[autodiscovery leave] %s\n", event.Name())
+				service, ok := event.Header("service")
+				version, _ := event.Header("version")
+				if ok {
+					if services[event.Name()] == nil {
+						services[event.Name()] = newWorkers()
+						services[event.Name()].add(service, version)
+					}
+				}
 			case gyre.EventShout:
 				fmt.Printf("[autodiscovery shout] %s\n", event.Msg())
 			case gyre.EventWhisper:
