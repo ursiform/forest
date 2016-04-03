@@ -7,7 +7,6 @@ package forest
 import (
 	"fmt"
 	"github.com/zeromq/gyre"
-	"time"
 )
 
 const Network = "FOREST"
