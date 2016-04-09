@@ -62,7 +62,7 @@ func (app *App) Duration(key string) time.Duration { return app.durations[key] }
 func (app *App) SetDuration(key string, value time.Duration) {
 	app.durations[key] = value
 	output := fmt.Sprintf("Duration(\"%s\") = %s", key, value)
-	InitLog(app, "initialize", output)
+	InitLog(app.Debug(), "initialize", output)
 }
 
 // Error gets the error for a specific key, e.g. "Unauthorized".
@@ -72,7 +72,7 @@ func (app *App) Error(key string) string { return app.errors[key] }
 func (app *App) SetError(key string, value string) {
 	app.errors[key] = value
 	output := fmt.Sprintf("Error(\"%s\") = %s", key, value)
-	InitLog(app, "initialize", output)
+	InitLog(app.Debug(), "initialize", output)
 }
 
 // LogRequests gets the app request logging flag.
@@ -88,7 +88,7 @@ func (app *App) Message(key string) string { return app.messages[key] }
 func (app *App) SetMessage(key string, value string) {
 	app.messages[key] = value
 	output := fmt.Sprintf("Message(\"%s\") = %s", key, value)
-	InitLog(app, "initialize", output)
+	InitLog(app.Debug(), "initialize", output)
 }
 
 // PoweredBy gets the response X-Powered-By HTTP header.
@@ -129,14 +129,15 @@ func (app *App) InstallWare(
 		println(fmt.Sprintf("Ware(\"%s\") %s", key, output))
 	} else {
 		output := fmt.Sprintf("Ware(\"%s\") %s", key, message)
-		InitLog(app, "install", output)
+		InitLog(app.Debug(), "install", output)
 	}
 	app.wares[key] = handler
 	return nil
 }
 
 func (app *App) On(verb string, pattern string, handlers ...interface{}) error {
-	InitLog(app, "listen", fmt.Sprintf("%s %s%s", verb, app.ProxyPath(), pattern))
+	message := fmt.Sprintf("%s %s%s", verb, app.ProxyPath(), pattern)
+	InitLog(app.Debug(), "listen", message)
 	return app.Mux.On(verb, pattern, handlers...)
 }
 
@@ -184,7 +185,7 @@ func New(debug bool) *App {
 	app.SetDebug(debug) // Set debug before using InitLog.
 	app.Mux = bear.New()
 	if err := loadConfig(app); err != nil {
-		InitLog(app, "warning", ConfigFile+" was not loaded")
+		InitLog(app.Debug(), "warning", ConfigFile+" was not loaded")
 	}
 	app.durations = make(map[string]time.Duration)
 	app.errors = make(map[string]string)

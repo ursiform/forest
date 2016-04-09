@@ -39,7 +39,7 @@ const (
 	WareInstalled         = "forest middleware"
 )
 
-func InitLog(app *App, level string, message string) {
+func InitLog(verbose bool, level string, message string) {
 	var prefix string
 	switch level {
 	case "initialize":
@@ -53,7 +53,7 @@ func InitLog(app *App, level string, message string) {
 	default:
 		prefix = "[ undefined ]"
 	}
-	if app.Debug() {
+	if verbose {
 		log.Printf("%s %s", prefix, message)
 	}
 }

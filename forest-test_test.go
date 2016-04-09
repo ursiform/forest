@@ -104,9 +104,9 @@ func TestInitLog(t *testing.T) {
 	// this test is just for complete coverage
 	debug := false
 	app := forest.New(debug)
-	forest.InitLog(app, "", "foo message")           // undefined
-	forest.InitLog(app, "initialize", "bar message") // install
-	forest.InitLog(app, "install", "baz message")    // default
+	forest.InitLog(app.Debug(), "", "foo message")           // undefined
+	forest.InitLog(app.Debug(), "initialize", "bar message") // install
+	forest.InitLog(app.Debug(), "install", "baz message")    // default
 }
 
 func TestInstallWare(t *testing.T) {
