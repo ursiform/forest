@@ -1,6 +1,6 @@
 # forest
 
-[![Coverage Status](https://coveralls.io/repos/ursiform/forest/badge.svg?branch=master&service=github)](https://coveralls.io/github/ursiform/forest?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/ursiform/forest/badge.svg?branch=master)](https://coveralls.io/github/ursiform/forest?branch=master)
 
 [![API documentation](https://godoc.org/github.com/ursiform/forest?status.svg)](https://godoc.org/github.com/ursiform/forest)
 
