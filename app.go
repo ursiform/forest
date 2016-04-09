@@ -13,7 +13,7 @@ import (
 
 type App struct {
 	*bear.Mux
-	config          *appConfig
+	Config          *AppConfig
 	durations       map[string]time.Duration
 	errors          map[string]string
 	messages        map[string]string
@@ -37,8 +37,8 @@ func initDefaults(app *App) {
 
 // CookiePath gets the cookie path for cookies the app sets.
 func (app *App) CookiePath() string {
-	if len(app.config.CookiePath) > 0 {
-		return app.config.CookiePath
+	if len(app.Config.CookiePath) > 0 {
+		return app.Config.CookiePath
 	} else {
 		return ""
 	}
@@ -46,14 +46,14 @@ func (app *App) CookiePath() string {
 
 // SetCookiePath sets the cookie path for cookies the app sets.
 func (app *App) SetCookiePath(value string) {
-	app.config.CookiePath = value
+	app.Config.CookiePath = value
 }
 
 // Debug gets the app debug flag.
-func (app *App) Debug() bool { return app.config.Debug }
+func (app *App) Debug() bool { return app.Config.Debug }
 
 // SetDebug sets the app debug flag.
-func (app *App) SetDebug(value bool) { app.config.Debug = value }
+func (app *App) SetDebug(value bool) { app.Config.Debug = value }
 
 // Duration gets the duration for a specific key, e.g. "Cookie" expiration.
 func (app *App) Duration(key string) time.Duration { return app.durations[key] }
@@ -76,10 +76,10 @@ func (app *App) SetError(key string, value string) {
 }
 
 // LogRequests gets the app request logging flag.
-func (app *App) LogRequests() bool { return app.config.LogRequests }
+func (app *App) LogRequests() bool { return app.Config.LogRequests }
 
 // SetLogRequests sets the app request logging flag.
-func (app *App) SetLogRequests(value bool) { app.config.LogRequests = value }
+func (app *App) SetLogRequests(value bool) { app.Config.LogRequests = value }
 
 // Message gets the app message for a specific key, e.g. "AlreadyLoggedIn".
 func (app *App) Message(key string) string { return app.messages[key] }
@@ -93,8 +93,8 @@ func (app *App) SetMessage(key string, value string) {
 
 // PoweredBy gets the response X-Powered-By HTTP header.
 func (app *App) PoweredBy() string {
-	if len(app.config.PoweredBy) > 0 {
-		return app.config.PoweredBy
+	if len(app.Config.PoweredBy) > 0 {
+		return app.Config.PoweredBy
 	} else {
 		return ""
 	}
@@ -102,13 +102,13 @@ func (app *App) PoweredBy() string {
 
 // SetPoweredBy sets the response X-Powered-By HTTP header.
 func (app *App) SetPoweredBy(value string) {
-	app.config.PoweredBy = value
+	app.Config.PoweredBy = value
 }
 
 // ProxyPath gets the reverse proxy path for self-documentation.
 func (app *App) ProxyPath() string {
-	if len(app.config.ProxyPath) > 0 {
-		return app.config.ProxyPath
+	if len(app.Config.ProxyPath) > 0 {
+		return app.Config.ProxyPath
 	} else {
 		return ""
 	}
@@ -116,7 +116,7 @@ func (app *App) ProxyPath() string {
 
 // SetProxyPath sets the reverse proxy path for self-documentation.
 func (app *App) SetProxyPath(proxyPath string) {
-	app.config.ProxyPath = proxyPath
+	app.Config.ProxyPath = proxyPath
 }
 
 func (app *App) InstallWare(
@@ -180,13 +180,12 @@ func (app *App) Ware(key string) func(ctx *bear.Context) {
 
 func New(debug bool) *App {
 	app := new(App)
-	app.config = new(appConfig)
+	app.Config = new(AppConfig)
 	app.SetDebug(debug) // Set debug before using InitLog.
 	app.Mux = bear.New()
 	if err := loadConfig(app); err != nil {
-		InitLog(app, "warning", configFile+" was not loaded")
+		InitLog(app, "warning", ConfigFile+" was not loaded")
 	}
-	loadNetworkDiscovery(app)
 	app.durations = make(map[string]time.Duration)
 	app.errors = make(map[string]string)
 	app.messages = make(map[string]string)

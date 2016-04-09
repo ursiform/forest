@@ -1,4 +1,4 @@
-// Copyright 2015 Afshin Darian. All rights reserved.
+// Copyright 2016 Afshin Darian. All rights reserved.
 // Use of this source code is governed by The MIT License
 // that can be found in the LICENSE file.
 
@@ -9,40 +9,29 @@ import (
 	"io/ioutil"
 )
 
-const configFile = "forest.json"
+const ConfigFile = "forest.json"
 
-type serviceConfig struct {
+type ServiceConfig struct {
 	Name    string `json:"name,omitempty"`
 	Version string `json:"version,omitempty"`
 }
 
-type autodiscoveryConfig struct {
-	Interface string `json:"interface,omitempty"`
-	Name      string `json:"name,omitempty"`
-	Port      int    `json:"port,omitempty"`
-	Silent    bool   `json:"silent,omitempty"`
-}
-
-type appConfig struct {
-	Autodiscovery *autodiscoveryConfig `json:"autodiscovery,omitempty"`
-	CookiePath    string
-	Debug         bool
-	LogRequests   bool
-	PoweredBy     string
-	ProxyPath     string
-	Service       *serviceConfig `json:"service,omitempty"`
+type AppConfig struct {
+	CookiePath  string
+	Debug       bool
+	LogRequests bool
+	PoweredBy   string
+	ProxyPath   string
+	Service     *ServiceConfig `json:"service,omitempty"`
 }
 
 func loadConfig(app *App) error {
-	data, err := ioutil.ReadFile(configFile)
+	data, err := ioutil.ReadFile(ConfigFile)
 	if err == nil {
-		err = json.Unmarshal(data, app.config)
+		err = json.Unmarshal(data, app.Config)
 	}
-	if app.config.Service == nil {
-		app.config.Service = &serviceConfig{}
-	}
-	if app.config.Autodiscovery == nil {
-		app.config.Autodiscovery = &autodiscoveryConfig{}
+	if app.Config.Service == nil {
+		app.Config.Service = &ServiceConfig{}
 	}
 	return err
 }
