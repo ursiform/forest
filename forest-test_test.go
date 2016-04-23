@@ -176,6 +176,7 @@ func TestServeSuccess(t *testing.T) {
 	app := forest.New(debug)
 	app.RegisterRoute(path, newRouter(app))
 	go func() {
+		app.Config.Service.Address = ":0"
 		if err := app.ListenAndServe(); err != nil {
 			t.Errorf("app.ListenAndServe failed, %s", err.Error())
 		}
