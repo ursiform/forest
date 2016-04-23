@@ -6,9 +6,10 @@ package forest
 
 import (
 	"fmt"
-	"github.com/ursiform/bear"
 	"net/http"
 	"time"
+
+	"github.com/ursiform/bear"
 )
 
 type App struct {

@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 )
 
-const ConfigFile = "forest.json"
+const ConfigFile = "bear.json"
 
 type ServiceConfig struct {
 	Name    string `json:"name,omitempty"`

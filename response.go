@@ -6,10 +6,11 @@ package forest
 
 import (
 	"encoding/json"
-	"github.com/ursiform/bear"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/ursiform/bear"
 )
 
 type Response struct {
