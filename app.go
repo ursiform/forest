@@ -12,6 +12,8 @@ import (
 	"github.com/ursiform/bear"
 )
 
+const address = ":80"
+
 type App struct {
 	*bear.Mux
 	Config          *AppConfig
@@ -136,6 +138,15 @@ func (app *App) InstallWare(
 	return nil
 }
 
+func (app *App) ListenAndServe() error {
+	return http.ListenAndServe(app.Config.Service.Address, app.Mux)
+}
+
+func (app *App) ListenAndServeTLS(certFile, keyFile string) error {
+	addr := app.Config.Service.Address
+	return http.ListenAndServeTLS(addr, certFile, keyFile, app.Mux)
+}
+
 func (app *App) On(verb string, pattern string, handlers ...interface{}) error {
 	message := fmt.Sprintf("%s %s%s", verb, app.ProxyPath(), pattern)
 	InitLog(app.Debug(), "listen", message)
@@ -152,13 +163,6 @@ func (app *App) Response(ctx *bear.Context,
 		Code:    code,
 		Success: success,
 		Message: message}
-}
-
-func (app *App) Serve(port string) error {
-	if "" == port {
-		return fmt.Errorf("forest: no port was specified")
-	}
-	return http.ListenAndServe(port, app.Mux)
 }
 
 func (app *App) SetCookie(
@@ -186,7 +190,13 @@ func New(debug bool) *App {
 	app.SetDebug(debug) // Set debug before using InitLog.
 	app.Mux = bear.New()
 	if err := loadConfig(app); err != nil {
-		InitLog(app.Debug(), "warning", ConfigFile+" was not loaded")
+		InitLog(true, "warning", ConfigFile+" was not loaded")
+	}
+	if app.Config.Service.Address == "" {
+		message := fmt.Sprintf("%s is not defined in %s, using default %s",
+			"service.address", ConfigFile, address)
+		app.Config.Service.Address = address
+		InitLog(true, "warn", message)
 	}
 	app.durations = make(map[string]time.Duration)
 	app.errors = make(map[string]string)

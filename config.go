@@ -14,6 +14,7 @@ const ConfigFile = "bear.json"
 type ServiceConfig struct {
 	Name    string `json:"name,omitempty"`
 	Version string `json:"version,omitempty"`
+	Address string `json:"address"`
 }
 
 type AppConfig struct {

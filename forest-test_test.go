@@ -170,26 +170,14 @@ func TestRetrievalMessage(t *testing.T) {
 	}
 }
 
-func TestServeFailure(t *testing.T) {
-	debug := false
-	path := root
-	app := forest.New(debug)
-	app.RegisterRoute(path, newRouter(app))
-	go func() {
-		if err := app.Serve(""); err == nil {
-			t.Errorf("app.Serve should reject empty port string")
-		}
-	}()
-}
-
 func TestServeSuccess(t *testing.T) {
 	debug := false
 	path := root
 	app := forest.New(debug)
 	app.RegisterRoute(path, newRouter(app))
 	go func() {
-		if err := app.Serve(":0"); err != nil {
-			t.Errorf("app.Serve failed, %s", err.Error())
+		if err := app.ListenAndServe(); err != nil {
+			t.Errorf("app.ListenAndServe failed, %s", err.Error())
 		}
 	}()
 }
