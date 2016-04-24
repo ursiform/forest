@@ -64,9 +64,9 @@ func makeRequest(t *testing.T, app *forest.App,
 }
 
 func TestBasicOperation(t *testing.T) {
-	debug := true
 	path := root
-	app := forest.New(debug)
+	app := forest.New()
+	app.Config.Debug = true
 	app.RegisterRoute(path, newRouter(app))
 	params := &requested{method: "GET", path: path}
 	want := &wanted{code: http.StatusOK, success: true}
@@ -74,11 +74,11 @@ func TestBasicOperation(t *testing.T) {
 }
 
 func TestCookiesAndHeaders(t *testing.T) {
-	debug := true
 	cookieName := "foo"  // also in setCookie function of router
 	cookieValue := "bar" // also in setCookie function of router
 	path := root
-	app := forest.New(debug)
+	app := forest.New()
+	app.Config.Debug = true
 	app.RegisterRoute(path, newRouter(app))
 	app.SetPoweredBy("Testing-FTW")
 	params := &requested{method: "GET", path: path}
@@ -100,18 +100,8 @@ func TestCookiesAndHeaders(t *testing.T) {
 	t.Errorf("cookie was not found")
 }
 
-func TestInitLog(t *testing.T) {
-	// this test is just for complete coverage
-	debug := false
-	app := forest.New(debug)
-	forest.InitLog(app.Debug(), "", "foo message")           // undefined
-	forest.InitLog(app.Debug(), "initialize", "bar message") // install
-	forest.InitLog(app.Debug(), "install", "baz message")    // default
-}
-
 func TestInstallWare(t *testing.T) {
-	debug := false
-	app := forest.New(debug)
+	app := forest.New()
 	handlerName := "TestHandler"
 	message := "test handler installed"
 	var handlerNil func(ctx *bear.Context)
@@ -129,9 +119,8 @@ func TestInstallWare(t *testing.T) {
 }
 
 func TestNonExistentWare(t *testing.T) {
-	debug := false
 	path := root + "/nonexistent"
-	app := forest.New(debug)
+	app := forest.New()
 	app.RegisterRoute(root, newRouter(app))
 	params := &requested{method: "GET", path: path}
 	want := &wanted{code: http.StatusInternalServerError, success: false}
@@ -139,9 +128,8 @@ func TestNonExistentWare(t *testing.T) {
 }
 
 func TestRetrievalDuration(t *testing.T) {
-	debug := false
 	durFoo := time.Hour * 1
-	app := forest.New(debug)
+	app := forest.New()
 	app.SetDuration("Foo", durFoo)
 	if app.Duration("Foo") != durFoo {
 		t.Errorf("SetDuration failed, want: %s got: %s",
@@ -150,9 +138,8 @@ func TestRetrievalDuration(t *testing.T) {
 }
 
 func TestRetrievalError(t *testing.T) {
-	debug := false
 	errFoo := "FOO_ERROR"
-	app := forest.New(debug)
+	app := forest.New()
 	app.SetError("Foo", errFoo)
 	if app.Error("Foo") != errFoo {
 		t.Errorf("SetError failed, want: %v got: %v", errFoo, app.Error("Foo"))
@@ -160,9 +147,8 @@ func TestRetrievalError(t *testing.T) {
 }
 
 func TestRetrievalMessage(t *testing.T) {
-	debug := false
 	msgFoo := "FOO_Message"
-	app := forest.New(debug)
+	app := forest.New()
 	app.SetMessage("Foo", msgFoo)
 	if app.Message("Foo") != msgFoo {
 		t.Errorf("SetMessage failed, want: %s got: %s",
@@ -171,9 +157,8 @@ func TestRetrievalMessage(t *testing.T) {
 }
 
 func TestServeSuccess(t *testing.T) {
-	debug := false
 	path := root
-	app := forest.New(debug)
+	app := forest.New()
 	app.RegisterRoute(path, newRouter(app))
 	go func() {
 		app.Config.Service.Address = ":0"

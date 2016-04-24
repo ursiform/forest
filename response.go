@@ -6,16 +6,17 @@ package forest
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/ursiform/bear"
+	"github.com/ursiform/logger"
 )
 
 type Response struct {
 	app     *App
-	Code    int `json:"-"`
+	code    int
 	ctx     *bear.Context
 	Data    interface{} `json:"data,omitempty"`
 	Success bool        `json:"success"`
@@ -42,9 +43,9 @@ func (res *Response) Write(data interface{}) (bytes int, err error) {
 	if 0 < len(poweredBy) {
 		res.ctx.ResponseWriter.Header().Set("X-Powered-By", poweredBy)
 	}
-	res.ctx.ResponseWriter.WriteHeader(res.Code)
+	res.ctx.ResponseWriter.WriteHeader(res.code)
 	bytes, err = res.ctx.ResponseWriter.Write(output)
-	if !res.app.LogRequests() && !res.app.Debug() {
+	if !res.app.Config.Service.LogRequests && !res.app.Config.Debug {
 		return
 	}
 	// First, try the X-Real-IP header from the reverse proxy.
@@ -60,7 +61,7 @@ func (res *Response) Write(data interface{}) (bytes int, err error) {
 	method := res.ctx.Request.Method
 	uri := res.ctx.Request.URL.RequestURI()
 	proto := res.ctx.Request.Proto
-	code := res.Code
+	code := res.code
 	agent := res.ctx.Request.UserAgent()
 	if agent == "" {
 		agent = UnknownAgent
@@ -73,7 +74,8 @@ func (res *Response) Write(data interface{}) (bytes int, err error) {
 	if !ok || sessionID == "" {
 		sessionID = UnknownSession
 	}
-	log.Printf("[%s/%s] \"%s %s %s\" %d %d \"%s\" [%s]\n",
-		ip, sessionID, method, uri, proto, code, bytes, agent, message)
+	logger.MustLog(logger.Info,
+		fmt.Sprintf("[%s/%s] \"%s %s %s\" %d %d \"%s\" [%s]",
+			ip, sessionID, method, uri, proto, code, bytes, agent, message))
 	return
 }

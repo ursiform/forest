@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ursiform/bear"
+	"github.com/ursiform/logger"
 )
 
 const address = ":80"
@@ -19,6 +20,7 @@ type App struct {
 	Config          *AppConfig
 	durations       map[string]time.Duration
 	errors          map[string]string
+	logger          *logger.Logger
 	messages        map[string]string
 	SafeErrorFilter func(error) error
 	wares           map[string]func(ctx *bear.Context)
@@ -52,20 +54,13 @@ func (app *App) SetCookiePath(value string) {
 	app.Config.CookiePath = value
 }
 
-// Debug gets the app debug flag.
-func (app *App) Debug() bool { return app.Config.Debug }
-
-// SetDebug sets the app debug flag.
-func (app *App) SetDebug(value bool) { app.Config.Debug = value }
-
 // Duration gets the duration for a specific key, e.g. "Cookie" expiration.
 func (app *App) Duration(key string) time.Duration { return app.durations[key] }
 
 // SetDuration sets the duration for a specific key, e.g. "Cookie" expiration.
 func (app *App) SetDuration(key string, value time.Duration) {
 	app.durations[key] = value
-	output := fmt.Sprintf("Duration(\"%s\") = %s", key, value)
-	InitLog(app.Debug(), "initialize", output)
+	app.Log(logger.Init, fmt.Sprintf("Duration(\"%s\") = %s", key, value))
 }
 
 // Error gets the error for a specific key, e.g. "Unauthorized".
@@ -74,15 +69,13 @@ func (app *App) Error(key string) string { return app.errors[key] }
 // SetError sets the error for a specific key, e.g. "Unauthorized".
 func (app *App) SetError(key string, value string) {
 	app.errors[key] = value
-	output := fmt.Sprintf("Error(\"%s\") = %s", key, value)
-	InitLog(app.Debug(), "initialize", output)
+	app.Log(logger.Init, fmt.Sprintf("Error(\"%s\") = %s", key, value))
 }
 
-// LogRequests gets the app request logging flag.
-func (app *App) LogRequests() bool { return app.Config.LogRequests }
-
-// SetLogRequests sets the app request logging flag.
-func (app *App) SetLogRequests(value bool) { app.Config.LogRequests = value }
+// Log outputs a log message at a specified log level.
+func (app *App) Log(level int, message string) {
+	app.logger.Log(level, message)
+}
 
 // Message gets the app message for a specific key, e.g. "AlreadyLoggedIn".
 func (app *App) Message(key string) string { return app.messages[key] }
@@ -90,8 +83,7 @@ func (app *App) Message(key string) string { return app.messages[key] }
 // SetMessage sets the app message for a specific key, e.g. "AlreadyLoggedIn".
 func (app *App) SetMessage(key string, value string) {
 	app.messages[key] = value
-	output := fmt.Sprintf("Message(\"%s\") = %s", key, value)
-	InitLog(app.Debug(), "initialize", output)
+	app.Log(logger.Init, fmt.Sprintf("Message(\"%s\") = %s", key, value))
 }
 
 // PoweredBy gets the response X-Powered-By HTTP header.
@@ -108,31 +100,16 @@ func (app *App) SetPoweredBy(value string) {
 	app.Config.PoweredBy = value
 }
 
-// ProxyPath gets the reverse proxy path for self-documentation.
-func (app *App) ProxyPath() string {
-	if len(app.Config.ProxyPath) > 0 {
-		return app.Config.ProxyPath
-	} else {
-		return ""
-	}
-}
-
-// SetProxyPath sets the reverse proxy path for self-documentation.
-func (app *App) SetProxyPath(proxyPath string) {
-	app.Config.ProxyPath = proxyPath
-}
-
 func (app *App) InstallWare(
 	key string, handler func(ctx *bear.Context), message string) error {
 	if handler == nil {
 		return fmt.Errorf("InstallWare(\"%s\") is nil", key)
 	}
 	if app.wares[key] != nil {
-		output := "overwritten, perhaps multiple Install* invocations"
-		println(fmt.Sprintf("Ware(\"%s\") %s", key, output))
+		app.Log(logger.Warn, fmt.Sprintf("Ware(\"%s\") %s",
+			key, "overwritten, perhaps multiple Install* invocations"))
 	} else {
-		output := fmt.Sprintf("Ware(\"%s\") %s", key, message)
-		InitLog(app.Debug(), "install", output)
+		app.Log(logger.Install, fmt.Sprintf("Ware(\"%s\") %s", key, message))
 	}
 	app.wares[key] = handler
 	return nil
@@ -148,8 +125,7 @@ func (app *App) ListenAndServeTLS(certFile, keyFile string) error {
 }
 
 func (app *App) On(verb string, pattern string, handlers ...interface{}) error {
-	message := fmt.Sprintf("%s %s%s", verb, app.ProxyPath(), pattern)
-	InitLog(app.Debug(), "listen", message)
+	app.Log(logger.Init, fmt.Sprintf("%s %s", verb, pattern))
 	return app.Mux.On(verb, pattern, handlers...)
 }
 
@@ -160,7 +136,7 @@ func (app *App) Response(ctx *bear.Context,
 	return &Response{
 		app:     app,
 		ctx:     ctx,
-		Code:    code,
+		code:    code,
 		Success: success,
 		Message: message}
 }
@@ -184,19 +160,20 @@ func (app *App) Ware(key string) func(ctx *bear.Context) {
 	}
 }
 
-func New(debug bool) *App {
+func New() *App {
 	app := new(App)
 	app.Config = new(AppConfig)
-	app.SetDebug(debug) // Set debug before using InitLog.
 	app.Mux = bear.New()
-	if err := loadConfig(app); err != nil {
-		InitLog(true, "warning", ConfigFile+" was not loaded")
+	err := loadConfig(app)
+	app.logger, _ = logger.New(app.Config.LogLevel)
+	if err != nil {
+		logger.MustLog(logger.Warn, ConfigFile+" was not loaded")
 	}
 	if app.Config.Service.Address == "" {
 		message := fmt.Sprintf("%s is not defined in %s, using default %s",
 			"service.address", ConfigFile, address)
 		app.Config.Service.Address = address
-		InitLog(true, "warn", message)
+		logger.MustLog(logger.Warn, message)
 	}
 	app.durations = make(map[string]time.Duration)
 	app.errors = make(map[string]string)

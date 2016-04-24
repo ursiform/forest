@@ -8,10 +8,7 @@ speak JSON.
 */
 package forest
 
-import (
-	"log"
-	"time"
-)
+import "time"
 
 const (
 	Body                  = "forestbody"
@@ -38,22 +35,3 @@ const (
 	UnknownSession        = "unknown-session"
 	WareInstalled         = "forest middleware"
 )
-
-func InitLog(verbose bool, level string, message string) {
-	var prefix string
-	switch level {
-	case "initialize":
-		prefix = "[initialized]"
-	case "install":
-		prefix = "[ installed ]"
-	case "listen":
-		prefix = "[ listening ]"
-	case "warn":
-		prefix = "[**warning**]"
-	default:
-		prefix = "[ undefined ]"
-	}
-	if verbose {
-		log.Printf("%s %s", prefix, message)
-	}
-}
