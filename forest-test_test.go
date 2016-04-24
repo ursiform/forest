@@ -80,16 +80,16 @@ func TestCookiesAndHeaders(t *testing.T) {
 	app := forest.New()
 	app.Config.Debug = true
 	app.RegisterRoute(path, newRouter(app))
-	app.SetPoweredBy("Testing-FTW")
+	app.Config.PoweredBy = "Testing-FTW"
 	params := &requested{method: "GET", path: path}
 	want := &wanted{code: http.StatusOK, success: true}
 	response := makeRequest(t, app, params, want)
 	if response == nil {
 		return
 	}
-	if response.Header.Get("X-Powered-By") != app.PoweredBy() {
+	if response.Header.Get("X-Powered-By") != app.Config.PoweredBy {
 		t.Errorf(
-			"app.PoweredBy() header did not match response header: %s",
+			"app.Config.PoweredBy header did not match response header: %s",
 			response.Header.Get("X-Powered-By"))
 	}
 	for _, cookie := range response.Cookies() {

@@ -39,7 +39,7 @@ func (res *Response) Write(data interface{}) (bytes int, err error) {
 	res.Data = data
 	output, _ := json.Marshal(res)
 	res.ctx.ResponseWriter.Header().Set("Content-Type", "application/json")
-	poweredBy := res.app.PoweredBy()
+	poweredBy := res.app.Config.PoweredBy
 	if 0 < len(poweredBy) {
 		res.ctx.ResponseWriter.Header().Set("X-Powered-By", poweredBy)
 	}

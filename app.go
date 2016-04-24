@@ -38,22 +38,6 @@ func initDefaults(app *App) {
 	app.SetError("Unauthorized", ErrorUnauthorized)
 }
 
-// Getters and setters
-
-// CookiePath gets the cookie path for cookies the app sets.
-func (app *App) CookiePath() string {
-	if len(app.Config.CookiePath) > 0 {
-		return app.Config.CookiePath
-	} else {
-		return ""
-	}
-}
-
-// SetCookiePath sets the cookie path for cookies the app sets.
-func (app *App) SetCookiePath(value string) {
-	app.Config.CookiePath = value
-}
-
 // Duration gets the duration for a specific key, e.g. "Cookie" expiration.
 func (app *App) Duration(key string) time.Duration { return app.durations[key] }
 
@@ -84,20 +68,6 @@ func (app *App) Message(key string) string { return app.messages[key] }
 func (app *App) SetMessage(key string, value string) {
 	app.messages[key] = value
 	app.Log(logger.Init, fmt.Sprintf("Message(\"%s\") = %s", key, value))
-}
-
-// PoweredBy gets the response X-Powered-By HTTP header.
-func (app *App) PoweredBy() string {
-	if len(app.Config.PoweredBy) > 0 {
-		return app.Config.PoweredBy
-	} else {
-		return ""
-	}
-}
-
-// SetPoweredBy sets the response X-Powered-By HTTP header.
-func (app *App) SetPoweredBy(value string) {
-	app.Config.PoweredBy = value
 }
 
 func (app *App) InstallWare(
