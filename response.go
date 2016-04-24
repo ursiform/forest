@@ -74,7 +74,7 @@ func (res *Response) Write(data interface{}) (bytes int, err error) {
 	if !ok || sessionID == "" {
 		sessionID = UnknownSession
 	}
-	logger.MustLog(logger.Info,
+	logger.MustLog(logger.Request,
 		fmt.Sprintf("[%s/%s] \"%s %s %s\" %d %d \"%s\" [%s]",
 			ip, sessionID, method, uri, proto, code, bytes, agent, message))
 	return
