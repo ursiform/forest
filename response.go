@@ -6,7 +6,6 @@ package forest
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -45,7 +44,9 @@ func (res *Response) Write(data interface{}) (bytes int, err error) {
 	}
 	res.ctx.ResponseWriter.WriteHeader(res.code)
 	bytes, err = res.ctx.ResponseWriter.Write(output)
-	if !res.app.Config.Service.LogRequests && !res.app.Config.Debug {
+	if !res.app.Config.Service.LogRequests &&
+		!res.app.Config.Debug &&
+		res.app.Config.LogLevel < logger.Request {
 		return
 	}
 	// First, try the X-Real-IP header from the reverse proxy.
@@ -74,8 +75,7 @@ func (res *Response) Write(data interface{}) (bytes int, err error) {
 	if !ok || sessionID == "" {
 		sessionID = UnknownSession
 	}
-	logger.MustLog(logger.Request,
-		fmt.Sprintf("[%s/%s] \"%s %s %s\" %d %d \"%s\" [%s]",
-			ip, sessionID, method, uri, proto, code, bytes, agent, message))
+	logger.MustRequest("%s@%s \"%s %s %s\" %d %d \"%s\" [%s]",
+		sessionID, ip, method, uri, proto, code, bytes, agent, message)
 	return
 }

@@ -20,7 +20,7 @@ type App struct {
 	Config          *AppConfig
 	durations       map[string]time.Duration
 	errors          map[string]string
-	logger          *logger.Logger
+	Log             *logger.Logger
 	messages        map[string]string
 	SafeErrorFilter func(error) error
 	wares           map[string]func(ctx *bear.Context)
@@ -44,7 +44,7 @@ func (app *App) Duration(key string) time.Duration { return app.durations[key] }
 // SetDuration sets the duration for a specific key, e.g. "Cookie" expiration.
 func (app *App) SetDuration(key string, value time.Duration) {
 	app.durations[key] = value
-	app.Log(logger.Init, fmt.Sprintf("Duration(\"%s\") = %s", key, value))
+	app.Log.Init("Duration(\"%s\") = %s", key, value)
 }
 
 // Error gets the error for a specific key, e.g. "Unauthorized".
@@ -53,12 +53,7 @@ func (app *App) Error(key string) string { return app.errors[key] }
 // SetError sets the error for a specific key, e.g. "Unauthorized".
 func (app *App) SetError(key string, value string) {
 	app.errors[key] = value
-	app.Log(logger.Init, fmt.Sprintf("Error(\"%s\") = %s", key, value))
-}
-
-// Log outputs a log message at a specified log level.
-func (app *App) Log(level int, message string) {
-	app.logger.Log(level, message)
+	app.Log.Init("Error(\"%s\") = %s", key, value)
 }
 
 // Message gets the app message for a specific key, e.g. "AlreadyLoggedIn".
@@ -67,7 +62,7 @@ func (app *App) Message(key string) string { return app.messages[key] }
 // SetMessage sets the app message for a specific key, e.g. "AlreadyLoggedIn".
 func (app *App) SetMessage(key string, value string) {
 	app.messages[key] = value
-	app.Log(logger.Init, fmt.Sprintf("Message(\"%s\") = %s", key, value))
+	app.Log.Init("Message(\"%s\") = %s", key, value)
 }
 
 func (app *App) InstallWare(
@@ -76,10 +71,10 @@ func (app *App) InstallWare(
 		return fmt.Errorf("InstallWare(\"%s\") is nil", key)
 	}
 	if app.wares[key] != nil {
-		app.Log(logger.Warn, fmt.Sprintf("Ware(\"%s\") %s",
-			key, "overwritten, perhaps multiple Install* invocations"))
+		app.Log.Warn("Ware(\"%s\") overwritten, perhaps multiple %s invocations",
+			key, "Install*")
 	} else {
-		app.Log(logger.Install, fmt.Sprintf("Ware(\"%s\") %s", key, message))
+		app.Log.Install("Ware(\"%s\") %s", key, message)
 	}
 	app.wares[key] = handler
 	return nil
@@ -95,7 +90,7 @@ func (app *App) ListenAndServeTLS(certFile, keyFile string) error {
 }
 
 func (app *App) On(verb string, pattern string, handlers ...interface{}) error {
-	app.Log(logger.Init, fmt.Sprintf("%s %s", verb, pattern))
+	app.Log.Init("%s %s", verb, pattern)
 	return app.Mux.On(verb, pattern, handlers...)
 }
 
@@ -130,20 +125,24 @@ func (app *App) Ware(key string) func(ctx *bear.Context) {
 	}
 }
 
-func New() *App {
+func New(configFile string) *App {
 	app := new(App)
 	app.Config = new(AppConfig)
+	if len(configFile) > 0 {
+		app.Config.File = configFile
+	} else {
+		app.Config.File = ConfigFile
+	}
 	app.Mux = bear.New()
 	err := loadConfig(app)
-	app.logger, _ = logger.New(app.Config.LogLevel)
+	app.Log, _ = logger.New(app.Config.LogLevel)
 	if err != nil {
-		logger.MustLog(logger.Warn, ConfigFile+" was not loaded")
+		logger.MustWarn("%s was not loaded", app.Config.File)
 	}
 	if app.Config.Service.Address == "" {
-		message := fmt.Sprintf("%s is not defined in %s, using default %s",
-			"service.address", ConfigFile, address)
 		app.Config.Service.Address = address
-		logger.MustLog(logger.Warn, message)
+		app.Log.Warn("service.address is not defined in %s, using default %s",
+			app.Config.File, address)
 	}
 	app.durations = make(map[string]time.Duration)
 	app.errors = make(map[string]string)

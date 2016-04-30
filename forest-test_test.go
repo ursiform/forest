@@ -65,7 +65,7 @@ func makeRequest(t *testing.T, app *forest.App,
 
 func TestBasicOperation(t *testing.T) {
 	path := root
-	app := forest.New()
+	app := forest.New(forest.ConfigFile)
 	app.Config.Debug = true
 	app.RegisterRoute(path, newRouter(app))
 	params := &requested{method: "GET", path: path}
@@ -77,7 +77,7 @@ func TestCookiesAndHeaders(t *testing.T) {
 	cookieName := "foo"  // also in setCookie function of router
 	cookieValue := "bar" // also in setCookie function of router
 	path := root
-	app := forest.New()
+	app := forest.New(forest.ConfigFile)
 	app.Config.Debug = true
 	app.RegisterRoute(path, newRouter(app))
 	app.Config.PoweredBy = "Testing-FTW"
@@ -101,7 +101,7 @@ func TestCookiesAndHeaders(t *testing.T) {
 }
 
 func TestInstallWare(t *testing.T) {
-	app := forest.New()
+	app := forest.New(forest.ConfigFile)
 	handlerName := "TestHandler"
 	message := "test handler installed"
 	var handlerNil func(ctx *bear.Context)
@@ -120,7 +120,7 @@ func TestInstallWare(t *testing.T) {
 
 func TestNonExistentWare(t *testing.T) {
 	path := root + "/nonexistent"
-	app := forest.New()
+	app := forest.New(forest.ConfigFile)
 	app.RegisterRoute(root, newRouter(app))
 	params := &requested{method: "GET", path: path}
 	want := &wanted{code: http.StatusInternalServerError, success: false}
@@ -129,7 +129,7 @@ func TestNonExistentWare(t *testing.T) {
 
 func TestRetrievalDuration(t *testing.T) {
 	durFoo := time.Hour * 1
-	app := forest.New()
+	app := forest.New(forest.ConfigFile)
 	app.SetDuration("Foo", durFoo)
 	if app.Duration("Foo") != durFoo {
 		t.Errorf("SetDuration failed, want: %s got: %s",
@@ -139,7 +139,7 @@ func TestRetrievalDuration(t *testing.T) {
 
 func TestRetrievalError(t *testing.T) {
 	errFoo := "FOO_ERROR"
-	app := forest.New()
+	app := forest.New(forest.ConfigFile)
 	app.SetError("Foo", errFoo)
 	if app.Error("Foo") != errFoo {
 		t.Errorf("SetError failed, want: %v got: %v", errFoo, app.Error("Foo"))
@@ -148,7 +148,7 @@ func TestRetrievalError(t *testing.T) {
 
 func TestRetrievalMessage(t *testing.T) {
 	msgFoo := "FOO_Message"
-	app := forest.New()
+	app := forest.New(forest.ConfigFile)
 	app.SetMessage("Foo", msgFoo)
 	if app.Message("Foo") != msgFoo {
 		t.Errorf("SetMessage failed, want: %s got: %s",
@@ -158,7 +158,7 @@ func TestRetrievalMessage(t *testing.T) {
 
 func TestServeSuccess(t *testing.T) {
 	path := root
-	app := forest.New()
+	app := forest.New(forest.ConfigFile)
 	app.RegisterRoute(path, newRouter(app))
 	go func() {
 		app.Config.Service.Address = ":0"
@@ -166,4 +166,32 @@ func TestServeSuccess(t *testing.T) {
 			t.Errorf("app.ListenAndServe failed, %s", err.Error())
 		}
 	}()
+}
+
+func TestTLSServeSuccess(t *testing.T) {
+	path := root
+	app := forest.New(forest.ConfigFile)
+	app.RegisterRoute(path, newRouter(app))
+	go func() {
+		app.Config.Service.Address = ":0"
+		certFile := "test-data/cert.pem"
+		keyFile := "test-data/key.pem"
+		if err := app.ListenAndServeTLS(certFile, keyFile); err != nil {
+			t.Errorf("app.ListenAndServeTLS failed, %s", err.Error())
+		}
+	}()
+}
+
+func TestEmptyConfigFile(t *testing.T) {
+	app := forest.New("")
+	if app.Config.LogLevelName != "listen" {
+		t.Errorf("app.Config.LogLevelName should be reset to listen if nonexistent")
+	}
+}
+
+func TestBadLogLevel(t *testing.T) {
+	app := forest.New("test-data/bear.json")
+	if app.Config.LogLevelName != "debug" {
+		t.Errorf("app.Config.LogLevelName should be reset to debug if bogus")
+	}
 }

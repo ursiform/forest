@@ -6,7 +6,6 @@ package forest
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 
 	"github.com/ursiform/logger"
@@ -23,31 +22,33 @@ type ServiceConfig struct {
 }
 
 type AppConfig struct {
-	CookiePath string
-	LogLevel   int
-	PoweredBy  string
-	Debug      bool           `json:"debug,omitempty"`
-	Service    *ServiceConfig `json:"service,omitempty"`
+	CookiePath   string
+	File         string
+	LogLevel     int
+	PoweredBy    string
+	Debug        bool           `json:"debug,omitempty"`
+	LogLevelName string         `json:"loglevel,omitempty"`
+	Service      *ServiceConfig `json:"service,omitempty"`
 }
 
 func loadConfig(app *App) error {
-	data, err := ioutil.ReadFile(ConfigFile)
+	data, err := ioutil.ReadFile(app.Config.File)
 	if err == nil {
 		err = json.Unmarshal(data, app.Config)
 	}
 	if app.Config.Service == nil {
 		app.Config.Service = &ServiceConfig{}
 	}
-	if len(app.Config.Service.LogLevelName) == 0 {
-		app.Config.Service.LogLevelName = "listen"
+	if len(app.Config.LogLevelName) == 0 {
+		app.Config.LogLevelName = "listen"
 	}
-	level, ok := logger.LogLevel[app.Config.Service.LogLevelName]
+	println("loglevel=" + app.Config.LogLevelName)
+	level, ok := logger.LogLevel[app.Config.LogLevelName]
 	if !ok {
-		message := fmt.Sprintf("%s=\"%s\" in %s is invalid; using \"%s\"",
-			"service.loglevel", app.Config.Service.LogLevelName, ConfigFile, "debug")
-		app.Config.Service.LogLevelName = "debug"
+		app.Config.LogLevelName = "debug"
 		app.Config.LogLevel = logger.Debug
-		logger.MustLog(logger.Error, message)
+		logger.MustError("loglevel=\"%s\" in %s is invalid; using \"%s\"",
+			app.Config.LogLevelName, app.Config.File, "debug")
 	} else {
 		app.Config.LogLevel = level
 	}
