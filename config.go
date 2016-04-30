@@ -42,7 +42,6 @@ func loadConfig(app *App) error {
 	if len(app.Config.LogLevelName) == 0 {
 		app.Config.LogLevelName = "listen"
 	}
-	println("loglevel=" + app.Config.LogLevelName)
 	level, ok := logger.LogLevel[app.Config.LogLevelName]
 	if !ok {
 		app.Config.LogLevelName = "debug"
