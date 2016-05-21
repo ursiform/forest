@@ -44,10 +44,10 @@ func loadConfig(app *App) error {
 	}
 	level, ok := logger.LogLevel[app.Config.LogLevelName]
 	if !ok {
-		app.Config.LogLevelName = "debug"
-		app.Config.LogLevel = logger.Debug
 		logger.MustError("loglevel=\"%s\" in %s is invalid; using \"%s\"",
 			app.Config.LogLevelName, app.Config.File, "debug")
+		app.Config.LogLevelName = "debug"
+		app.Config.LogLevel = logger.Debug
 	} else {
 		app.Config.LogLevel = level
 	}
