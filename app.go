@@ -17,7 +17,7 @@ const address = ":80"
 
 type App struct {
 	*bear.Mux
-	Config          *AppConfig
+	Config          *Config
 	durations       map[string]time.Duration
 	errors          map[string]string
 	Log             *logger.Logger
@@ -81,11 +81,11 @@ func (app *App) InstallWare(
 }
 
 func (app *App) ListenAndServe() error {
-	return http.ListenAndServe(app.Config.Service.Address, app.Mux)
+	return http.ListenAndServe(app.Config.Address, app.Mux)
 }
 
 func (app *App) ListenAndServeTLS(certFile, keyFile string) error {
-	addr := app.Config.Service.Address
+	addr := app.Config.Address
 	return http.ListenAndServeTLS(addr, certFile, keyFile, app.Mux)
 }
 
@@ -127,7 +127,7 @@ func (app *App) Ware(key string) func(ctx *bear.Context) {
 
 func New(configFile string) *App {
 	app := new(App)
-	app.Config = new(AppConfig)
+	app.Config = new(Config)
 	if len(configFile) > 0 {
 		app.Config.File = configFile
 	} else {
@@ -139,9 +139,9 @@ func New(configFile string) *App {
 	if err != nil {
 		logger.MustWarn("%s was not loaded", app.Config.File)
 	}
-	if app.Config.Service.Address == "" {
-		app.Config.Service.Address = address
-		app.Log.Warn("service.address is not defined in %s, using default %s",
+	if app.Config.Address == "" {
+		app.Config.Address = address
+		app.Log.Warn("address is not defined in %s, using default %s",
 			app.Config.File, address)
 	}
 	app.durations = make(map[string]time.Duration)

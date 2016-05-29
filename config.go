@@ -11,33 +11,25 @@ import (
 	"github.com/ursiform/logger"
 )
 
-const ConfigFile = "bear.json"
+const ConfigFile = "forest.json"
 
-type ServiceConfig struct {
+type Config struct {
 	Address      string `json:"address,omitempty"`
-	LogLevelName string `json:"loglevel,omitempty"`
-	LogRequests  bool   `json:"logrequests,omitempty"`
-	Name         string `json:"name,omitempty"`
-	Version      string `json:"version,omitempty"`
-}
-
-type AppConfig struct {
 	CookiePath   string
 	File         string
 	LogLevel     int
+	LogLevelName string `json:"loglevel,omitempty"`
+	LogRequests  bool   `json:"logrequests,omitempty"`
+	Name         string `json:"name,omitempty"`
 	PoweredBy    string
-	Debug        bool           `json:"debug,omitempty"`
-	LogLevelName string         `json:"loglevel,omitempty"`
-	Service      *ServiceConfig `json:"service,omitempty"`
+	Debug        bool   `json:"debug,omitempty"`
+	Version      string `json:"version,omitempty"`
 }
 
 func loadConfig(app *App) error {
 	data, err := ioutil.ReadFile(app.Config.File)
 	if err == nil {
 		err = json.Unmarshal(data, app.Config)
-	}
-	if app.Config.Service == nil {
-		app.Config.Service = &ServiceConfig{}
 	}
 	if len(app.Config.LogLevelName) == 0 {
 		app.Config.LogLevelName = "listen"

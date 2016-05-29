@@ -44,7 +44,7 @@ func (res *Response) Write(data interface{}) (bytes int, err error) {
 	}
 	res.ctx.ResponseWriter.WriteHeader(res.code)
 	bytes, err = res.ctx.ResponseWriter.Write(output)
-	if !res.app.Config.Service.LogRequests &&
+	if !res.app.Config.LogRequests &&
 		!res.app.Config.Debug &&
 		res.app.Config.LogLevel < logger.Request {
 		return

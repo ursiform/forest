@@ -161,7 +161,7 @@ func TestServeSuccess(t *testing.T) {
 	app := forest.New(forest.ConfigFile)
 	app.RegisterRoute(path, newRouter(app))
 	go func() {
-		app.Config.Service.Address = ":0"
+		app.Config.Address = ":0"
 		if err := app.ListenAndServe(); err != nil {
 			t.Errorf("app.ListenAndServe failed, %s", err.Error())
 		}
@@ -173,7 +173,7 @@ func TestTLSServeSuccess(t *testing.T) {
 	app := forest.New(forest.ConfigFile)
 	app.RegisterRoute(path, newRouter(app))
 	go func() {
-		app.Config.Service.Address = ":0"
+		app.Config.Address = ":0"
 		certFile := "test-data/cert.pem"
 		keyFile := "test-data/key.pem"
 		if err := app.ListenAndServeTLS(certFile, keyFile); err != nil {
@@ -190,7 +190,7 @@ func TestEmptyConfigFile(t *testing.T) {
 }
 
 func TestBadLogLevel(t *testing.T) {
-	app := forest.New("test-data/bear.json")
+	app := forest.New("test-data/forest.json")
 	if app.Config.LogLevelName != "debug" {
 		t.Errorf("app.Config.LogLevelName should be reset to debug if bogus")
 	}
